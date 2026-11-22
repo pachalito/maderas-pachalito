@@ -263,10 +263,96 @@
       '<span class="por" aria-hidden="true">×</span>' +
       '<div class="medida"><label for="cl-' + id + '">Largo</label><span><input id="cl-' + id + '" inputmode="decimal" autocomplete="off" placeholder="0" data-corte-l="' + esc(r.codigo) + '"> cm</span></div>' +
       '<div class="medida"><label for="cn-' + id + '">Piezas</label><span><input id="cn-' + id + '" inputmode="numeric" autocomplete="off" value="1" data-corte-n="' + esc(r.codigo) + '"></span></div>' +
+      '<div class="dibujo-corte" data-dibujo="' + esc(r.codigo) + '" hidden></div>' +
       '<div class="resultado" data-corte-res="' + esc(r.codigo) + '" aria-live="polite">Ingresá ancho y largo</div>' +
       '<button type="button" class="btn-agregar" data-corte="' + esc(r.codigo) + '">Agregar corte</button>' +
       '</div></div>';
   }
+  // ---------- Dibujo del corte: puntas redondeadas y bordes con filo matado ----------
+  // Puntas: 0 arriba izq, 1 arriba der, 2 abajo der, 3 abajo izq. Bordes: 0 arriba, 1 derecha, 2 abajo, 3 izquierda.
+  // El lado más largo se dibuja siempre horizontal.
+  var formas = {};
+  var PUNTAS = ['arriba a la izquierda', 'arriba a la derecha', 'abajo a la derecha', 'abajo a la izquierda'];
+  var BORDES = ['arriba', 'derecha', 'abajo', 'izquierda'];
+  function formaDe(codigo) { return formas[codigo] || (formas[codigo] = { esq: [0, 0, 0, 0], bordes: [0, 0, 0, 0] }); }
+  function formaVacia(f) { return !f || (f.esq.join('') + f.bordes.join('')).indexOf('1') < 0; }
+  function ladosDe(a, l) { var hz = Math.max(a, l), vt = Math.min(a, l); return [hz, vt, hz, vt]; }
+  function textoForma(f, a, l) {
+    if (formaVacia(f)) return '';
+    var lados = ladosDe(a, l), partes = [];
+    var e = PUNTAS.filter(function (x, i) { return f.esq[i]; });
+    var b = BORDES.map(function (x, i) { return f.bordes[i] ? x + ' (' + P.numero(lados[i]) + ' cm)' : ''; }).filter(Boolean);
+    if (e.length) partes.push(e.length === 4 ? 'las 4 puntas redondeadas' : (e.length === 1 ? 'punta redondeada ' : 'puntas redondeadas ') + e.join(', '));
+    if (b.length) partes.push(b.length === 4 ? 'matar filo en los 4 bordes' : 'matar filo: ' + b.join(', '));
+    var t = partes.join('; ');
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  function dibujoSVG(a, l, f, codigo) {
+    var interactivo = !!codigo, W = 320, H = interactivo ? 200 : 120, pad = interactivo ? 40 : 22;
+    var lados = ladosDe(a, l), hz = lados[0], vt = lados[1];
+    var s = Math.min((W - 2 * pad) / hz, (H - 2 * pad) / vt);
+    var w = hz * s, h = Math.max(vt * s, interactivo ? 34 : 18);
+    var x = (W - w) / 2, y = (H - h) / 2 + (interactivo ? 4 : 0);
+    var rr = Math.min(Math.min(w, h) * 0.3, 28), r = f.esq.map(function (v) { return v ? rr : 0; });
+    var n = function (v) { return Math.round(v * 10) / 10; };
+    var d = 'M' + n(x + r[0]) + ',' + n(y) + 'H' + n(x + w - r[1]) + (r[1] ? 'A' + n(r[1]) + ',' + n(r[1]) + ' 0 0 1 ' + n(x + w) + ',' + n(y + r[1]) : '') +
+      'V' + n(y + h - r[2]) + (r[2] ? 'A' + n(r[2]) + ',' + n(r[2]) + ' 0 0 1 ' + n(x + w - r[2]) + ',' + n(y + h) : '') +
+      'H' + n(x + r[3]) + (r[3] ? 'A' + n(r[3]) + ',' + n(r[3]) + ' 0 0 1 ' + n(x) + ',' + n(y + h - r[3]) : '') +
+      'V' + n(y + r[0]) + (r[0] ? 'A' + n(r[0]) + ',' + n(r[0]) + ' 0 0 1 ' + n(x + r[0]) + ',' + n(y) : '') + 'Z';
+    var esquinas = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+    var g = '<svg class="svg-corte" viewBox="0 0 ' + W + ' ' + H + '" ' + (interactivo ? 'role="group" aria-label="Dibujo del corte"' : 'aria-hidden="true"') + '>' +
+      '<path d="' + d + '" class="pieza"/>';
+    // Cruces en los bordes con el filo matado
+    var cruces = '';
+    for (var i = 0; i < 4; i++) {
+      if (!f.bordes[i]) continue;
+      var p0 = esquinas[i], p1 = esquinas[(i + 1) % 4];
+      var largo = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), ini = Math.max(r[i], 6) + 4, fin = largo - Math.max(r[(i + 1) % 4], 6) - 4;
+      var paso = interactivo ? 20 : 14, k = Math.max(1, Math.floor((fin - ini) / paso)), t = interactivo ? 4.5 : 3;
+      for (var j = 0; j <= k; j++) {
+        var dd = k ? ini + (fin - ini) * j / k : (ini + fin) / 2;
+        var cx = p0[0] + (p1[0] - p0[0]) * dd / largo, cy = p0[1] + (p1[1] - p0[1]) * dd / largo;
+        cruces += 'M' + n(cx - t) + ',' + n(cy - t) + 'L' + n(cx + t) + ',' + n(cy + t) + 'M' + n(cx + t) + ',' + n(cy - t) + 'L' + n(cx - t) + ',' + n(cy + t);
+      }
+    }
+    if (cruces) g += '<path d="' + cruces + '" class="cruz"/>';
+    if (interactivo) {
+      g += '<text x="' + n(x + w / 2) + '" y="' + n(y - 12) + '" text-anchor="middle" class="cota">' + P.numero(hz) + ' cm</text>' +
+        '<text x="' + n(x - 12) + '" y="' + n(y + h / 2) + '" text-anchor="middle" class="cota" transform="rotate(-90 ' + n(x - 12) + ' ' + n(y + h / 2) + ')">' + P.numero(vt) + ' cm</text>';
+      for (var b = 0; b < 4; b++) {
+        var q0 = esquinas[b], q1 = esquinas[(b + 1) % 4], m = 16;
+        var ux = Math.sign(q1[0] - q0[0]), uy = Math.sign(q1[1] - q0[1]);
+        g += '<line x1="' + n(q0[0] + ux * m) + '" y1="' + n(q0[1] + uy * m) + '" x2="' + n(q1[0] - ux * m) + '" y2="' + n(q1[1] - uy * m) + '" class="zona zona-borde' + (f.bordes[b] ? ' activo' : '') + '"' +
+          ' data-borde="' + b + '" data-pieza="' + esc(codigo) + '" role="button" tabindex="0" aria-pressed="' + (f.bordes[b] ? 'true' : 'false') + '" aria-label="Matar filo del borde de ' + BORDES[b] + ' (' + P.numero(lados[b]) + ' cm)"/>';
+      }
+      esquinas.forEach(function (c0, i) {
+        // Si la punta está redondeada, el marcador va sobre la curva
+        var o = f.esq[i] ? rr * 0.29 : 0, c = [c0[0] + (i === 0 || i === 3 ? o : -o), c0[1] + (i < 2 ? o : -o)];
+        g += '<g class="zona zona-punta' + (f.esq[i] ? ' activo' : '') + '" data-esq="' + i + '" data-pieza="' + esc(codigo) + '" role="button" tabindex="0" aria-pressed="' + (f.esq[i] ? 'true' : 'false') + '" aria-label="Punta redondeada ' + PUNTAS[i] + '">' +
+          '<circle cx="' + n(c[0]) + '" cy="' + n(c[1]) + '" r="18" class="toque"/><circle cx="' + n(c[0]) + '" cy="' + n(c[1]) + '" r="6.5" class="marca-punta"/></g>';
+      });
+    }
+    return g + '</svg>';
+  }
+  function pintarDibujo(codigo, enfocar) {
+    var cont = document.querySelector('[data-dibujo="' + CSS.escape(codigo) + '"]');
+    if (!cont) return;
+    var c = leerCorte(codigo);
+    if (!c.ok) { cont.hidden = true; cont.innerHTML = ''; return; }
+    var f = formaDe(codigo), txt = textoForma(f, c.a, c.l);
+    cont.hidden = false;
+    cont.innerHTML = dibujoSVG(c.a, c.l, f, codigo) +
+      '<p class="ayuda-dibujo">Tocá una <b>punta</b> para redondearla. Tocá un <b>borde</b> para matarle el filo (se marca con <span class="x">✕</span>).</p>' +
+      '<p class="forma-txt" aria-live="polite">' + (txt ? esc(txt) : 'Puntas rectas, sin matar filo.') + '</p>';
+    if (enfocar) { var el = cont.querySelector(enfocar); if (el) el.focus(); }
+  }
+  function tocarForma(el) {
+    var codigo = el.getAttribute('data-pieza'), f = formaDe(codigo), sel;
+    if (el.hasAttribute('data-esq')) { var i = +el.getAttribute('data-esq'); f.esq[i] = f.esq[i] ? 0 : 1; sel = '[data-esq="' + i + '"]'; }
+    else { var b = +el.getAttribute('data-borde'); f.bordes[b] = f.bordes[b] ? 0 : 1; sel = '[data-borde="' + b + '"]'; }
+    pintarDibujo(codigo, sel);
+  }
+
   // Medida de la placa entera del mismo material y espesor = corte máximo (en cm)
   function placaDe(r) {
     var p = datos.filter(function (x) {
@@ -288,6 +374,7 @@
   function actualizarCorte(codigo) {
     var r = porCodigo[codigo], c = leerCorte(codigo), el = document.querySelector('[data-corte-res="' + CSS.escape(codigo) + '"]');
     if (!el) return;
+    pintarDibujo(codigo);
     if (!c.a || !c.l) { el.textContent = 'Ingresá ancho y largo'; el.classList.remove('error'); return; }
     if (!c.ok) { el.textContent = 'No entra en una placa: el corte máximo es ' + c.max; el.classList.add('error'); return; }
     el.classList.remove('error');
@@ -299,10 +386,17 @@
     if (!r) return false;
     if (!c.ok) { actualizarCorte(codigo); var el = document.querySelector('[data-corte-res="' + CSS.escape(codigo) + '"]'); if (el) { el.textContent = c.a && c.l ? 'No entra en una placa: el corte máximo es ' + c.max : 'Ingresá ancho y largo en cm'; el.classList.add('error'); } return false; }
     var medidas = P.numero(c.a) + ' x ' + P.numero(c.l) + ' cm', clave = r.codigo + '#' + c.a + 'x' + c.l;
+    var f = formaDe(codigo), conForma = !formaVacia(f);
+    if (conForma) clave += '#' + f.esq.join('') + f.bordes.join('');
     var items = P.leerPedido(), it = items.filter(function (x) { return x.codigo === clave; })[0];
     if (it) it.cant += c.n;
-    else items.push({ codigo: clave, base: r.codigo, nombre: r.nombre, medidas: medidas, m2: c.m2, precio: r.precio, unidad: 'm²', cant: c.n });
+    else {
+      var nuevo = { codigo: clave, base: r.codigo, nombre: r.nombre, medidas: medidas, m2: c.m2, precio: r.precio, unidad: 'm²', cant: c.n };
+      if (conForma) { nuevo.a = c.a; nuevo.l = c.l; nuevo.forma = { esq: f.esq.slice(), bordes: f.bordes.slice() }; nuevo.formaTxt = textoForma(f, c.a, c.l); }
+      items.push(nuevo);
+    }
     P.guardarPedido(items);
+    delete formas[codigo];
     return true;
   }
 
@@ -335,7 +429,9 @@
         : esc(x.codigo) + ' · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + sufijo(x.unidad));
       h += '<div class="pedido-item"><div class="arriba">' +
         (f ? '<button type="button" class="btn-foto" data-ver="' + esc(f) + '" data-titulo="' + esc(x.nombre) + '" aria-label="Ver foto grande de ' + esc(x.nombre) + '"><img class="mini-prod" src="' + esc(f) + '" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>' : '') +
-        '<div class="txt"><div>' + esc(nombreItem(x)) + '</div><div class="det">' + det + '</div></div><b class="precio">' + subtotalTxt(x) + '</b></div>' +
+        '<div class="txt"><div>' + esc(nombreItem(x)) + '</div><div class="det">' + det + '</div>' +
+        (x.forma ? '<div class="forma-pedido">' + dibujoSVG(x.a, x.l, x.forma) + '<span>' + esc(x.formaTxt || '') + '</span></div>' : '') +
+        '</div><b class="precio">' + subtotalTxt(x) + '</b></div>' +
         '<div class="abajo"><div class="cantidad chica"><button type="button" data-menos="' + esc(x.codigo) + '" aria-label="Restar uno">−</button>' +
         '<label class="oculto" for="c-' + esc(x.codigo) + '">Cantidad</label><input id="c-' + esc(x.codigo) + '" type="text" inputmode="decimal" autocomplete="off" value="' + P.numero(x.cant) + '" data-cant="' + esc(x.codigo) + '">' +
         '<button type="button" data-mas="' + esc(x.codigo) + '" aria-label="Sumar uno">+</button>' + '<span class="unidad">' + (u || 'u.') + '</span></div>' +
@@ -377,6 +473,7 @@
     items.forEach(function (x) {
       var precio = x.precio == null ? 'precio a consultar' : pesos(subtotal(x));
       if (x.m2) lineas.push('• ' + P.numero(x.cant) + (+x.cant === 1 ? ' corte' : ' cortes') + ' de ' + x.medidas + ' de ' + x.nombre + ' (' + m2Txt(x.m2 * x.cant) + ' mt2) — ' + precio);
+      if (x.m2 && x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : ''));
       else lineas.push('• ' + cantMensaje(x) + ' de ' + x.nombre + ' — ' + precio);
     });
     var nc = aConsultar(items);
@@ -434,6 +531,7 @@
     visor.addEventListener('close', function () { $('visor-img').removeAttribute('src'); });
 
     cont.addEventListener('click', function (e) {
+      var z = e.target.closest('[data-pieza]'); if (z) { tocarForma(z); return; }
       var b = e.target.closest('button'); if (!b) return;
       if (b.dataset.ver) { abrirVisor(b.dataset.ver, b.dataset.titulo); return; }
       var h = new URLSearchParams(location.hash.slice(1));
@@ -477,6 +575,8 @@
       if (c) actualizarCorte(c);
     });
     cont.addEventListener('keydown', function (e) {
+      var z = e.target.closest && e.target.closest('[data-pieza]');
+      if (z && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tocarForma(z); return; }
       var c = e.target.dataset.corteA || e.target.dataset.corteL || e.target.dataset.corteN;
       if (c && e.key === 'Enter') { e.preventDefault(); if (agregarCorte(c)) render(true); return; }
       if (e.key === 'Enter' && e.target.dataset.qty) {

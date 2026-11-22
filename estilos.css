@@ -280,6 +280,27 @@ button,input,select,textarea{font:inherit;color:inherit}
 .calc-corte .resultado{flex:1 1 140px;padding-left:6px;min-height:44px;display:flex;align-items:center;font-size:15px}
 .calc-corte .resultado.error{color:var(--rojo-osc)}
 .calc-corte .btn-agregar{flex:0 0 auto}
+/* Dibujo del corte */
+.dibujo-corte{flex:1 1 100%;background:#fff;border:1px solid var(--linea);border-radius:12px;padding:8px 10px 10px}
+.dibujo-corte[hidden]{display:none}
+.svg-corte{display:block;width:100%;max-width:420px;height:auto;margin:0 auto;-webkit-tap-highlight-color:transparent}
+.svg-corte .pieza{fill:#E9D8BC;stroke:var(--texto);stroke-width:2;stroke-linejoin:round}
+.svg-corte .cruz{fill:none;stroke:var(--rojo);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
+.svg-corte .cota{font-size:12px;fill:var(--suave);font-family:var(--sans)}
+.svg-corte .zona{cursor:pointer;outline:none}
+.svg-corte .zona-borde{stroke:transparent;stroke-width:24;stroke-linecap:round}
+.svg-corte .zona-borde:focus-visible{stroke:rgba(210,0,10,.12)}
+@media (hover:hover){.svg-corte .zona-borde:hover{stroke:rgba(210,0,10,.12)}.svg-corte .zona-punta:hover .marca-punta{stroke:var(--rojo);stroke-dasharray:none}.svg-corte .zona-punta:hover .toque{fill:rgba(210,0,10,.10)}}
+.svg-corte .toque{fill:transparent}
+.svg-corte .marca-punta{fill:#fff;stroke:var(--gris);stroke-width:1.5;stroke-dasharray:3 2}
+.svg-corte .zona-punta:focus-visible .marca-punta{stroke:var(--rojo);stroke-dasharray:none}
+.svg-corte .zona-punta.activo .marca-punta{fill:var(--rojo);stroke:var(--rojo);stroke-dasharray:none}
+.svg-corte .zona-punta:focus-visible .toque{fill:rgba(210,0,10,.10)}
+.ayuda-dibujo{margin:6px 0 0;font-size:13px;color:var(--suave);text-align:center;line-height:1.4}
+.ayuda-dibujo .x{color:var(--rojo);font-weight:700}
+.forma-txt{margin:4px 0 0;font-size:14px;font-weight:600;text-align:center;color:var(--texto)}
+.forma-pedido{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--suave)}
+.forma-pedido .svg-corte{width:130px;flex:0 0 130px;margin:0}
 @media (max-width:420px){.calc-corte .resultado{flex-basis:100%}.calc-corte .btn-agregar{width:100%}}
 
 /* Botón destacado de la calculadora de techos (inicio) */
