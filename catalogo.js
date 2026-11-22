@@ -357,11 +357,11 @@
     var items = P.leerPedido(), it = items.filter(function (x) { return x.codigo === clave; })[0];
     if (it) it.cant += c.n;
     else {
-      var nuevo = { codigo: clave, base: r.codigo, nombre: r.nombre, medidas: medidas, m2: c.m2, precio: r.precio, unidad: 'm²', cant: c.n };
+      var nuevo = { codigo: clave, base: r.codigo, nombre: r.nombre, medidas: medidas, m2: c.m2, precio: r.precio, unidad: 'm²', cant: c.n, a: c.a, l: c.l };
       if (recargoDe(c.m2)) nuevo.recargo = recargoDe(c.m2);
       if (conForma) {
         var ex = extraDe(f);
-        nuevo.a = c.a; nuevo.l = c.l; nuevo.forma = { esq: f.esq.slice(), bordes: f.bordes.slice() }; nuevo.formaTxt = textoForma(f, c.a, c.l);
+        nuevo.forma = { esq: f.esq.slice(), bordes: f.bordes.slice() }; nuevo.formaTxt = textoForma(f, c.a, c.l);
         nuevo.extra = ex.consultar ? 0 : ex.monto; nuevo.extraConsultar = ex.consultar;
       }
       items.push(nuevo);
@@ -448,10 +448,14 @@
         if (x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : '') + (extraTxt(x) ? ' — ' + extraTxt(x) : ''));
       } else lineas.push('• ' + cantMensaje(x) + ' de ' + x.nombre + ' — ' + precio);
     });
-    var conDibujo = items.filter(function (x) { return x.forma && x.a && x.l; });
-    if (conDibujo.length) {
-      var url = new URL('dibujo.html#d=' + D.codificar(conDibujo), location.href).href;
-      lineas.push('', '📐 Dibujo de ' + (conDibujo.length === 1 ? 'la pieza' : 'las piezas') + ': ' + url);
+    // Link con el dibujo y la lista de todos los cortes (para ver, imprimir o bajar a Excel)
+    var cortes = items.filter(function (x) { return x.m2; }).map(function (x) {
+      var m = String(x.medidas || '').match(/([\d.,]+)\s*x\s*([\d.,]+)/), num = function (v) { return +String(v).replace(',', '.'); };
+      return { nombre: x.nombre, a: x.a || (m ? num(m[1]) : 0), l: x.l || (m ? num(m[2]) : 0), cant: x.cant, forma: x.forma || { esq: [0, 0, 0, 0], bordes: [0, 0, 0, 0] } };
+    }).filter(function (c) { return c.a && c.l; });
+    if (cortes.length) {
+      var url = new URL('dibujo.html#d=' + D.codificar(cortes), location.href).href;
+      lineas.push('', '📐 Dibujo y lista de cortes: ' + url);
     }
     var nc = aConsultar(items);
     if (nc === items.length) lineas.push('', '¿Me pasan el precio?');

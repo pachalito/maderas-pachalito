@@ -335,4 +335,6 @@ button,input,select,textarea{font:inherit;color:inherit}
 .pieza-dibujo h2{margin:0;font-size:18px}
 .pieza-dibujo .det{margin:2px 0 6px;color:var(--suave);font-size:15px}
 .pieza-dibujo .svg-corte{max-width:560px}
-@media print{.encabezado,.pie,#imprimir,.barra-pedido{display:none!important}.pieza-dibujo{border-color:#999}}
+.botones-dibujo{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.botones-dibujo[hidden]{display:none}
+@media print{.botones-dibujo,.encabezado,.pie,#imprimir,.barra-pedido{display:none!important}.pieza-dibujo{border-color:#999}}

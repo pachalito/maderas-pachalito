@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dibujo de los cortes · Maderas Pachalito</title>
+<title>Lista de cortes · Maderas Pachalito</title>
 <meta name="description" content="Dibujo de las piezas cortadas a medida: puntas redondeadas y bordes con el filo matado.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#D2000A">
@@ -53,10 +53,13 @@
 
 <main class="pagina-dibujo">
   <div class="contenedor">
-    <h1>Dibujo de los cortes</h1>
+    <h1>Lista de cortes</h1>
     <p class="subtitulo">Cada pieza se dibuja con el lado más largo acostado. Las puntas rojas van <b>redondeadas</b> y los bordes con <span class="x">✕</span> van con el <b>filo matado</b>.</p>
     <div id="piezas"></div>
-    <button type="button" class="btn" id="imprimir" style="margin-top:18px">Imprimir</button>
+    <div class="botones-dibujo">
+      <button type="button" class="btn btn-principal" id="excel">Descargar para Excel</button>
+      <button type="button" class="btn" id="imprimir">Imprimir o guardar PDF</button>
+    </div>
   </div>
 </main>
 <script>
@@ -73,6 +76,29 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.getElementById('piezas').innerHTML = h || '<p class="aviso">No hay piezas para mostrar. Revisá que el link esté completo.</p>';
   document.getElementById('imprimir').onclick = function () { window.print(); };
+
+  // Archivo CSV para Excel: separado por ";" y con coma decimal, como lo espera Excel en Argentina
+  var PUNTA_COD = ['ARR-IZQ', 'ARR-DER', 'ABA-DER', 'ABA-IZQ'], BORDE_COD = ['ARR', 'DER', 'ABA', 'IZQ'];
+  function celda(v) { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  function num(v) { return String(+(+v).toFixed(2)).replace('.', ','); }
+  document.getElementById('excel').onclick = function () {
+    var filas = [['Material', 'Cantidad', 'Ancho (cm)', 'Largo (cm)', 'Puntas redondas', 'Filo matado']];
+    cortes.forEach(function (c) {
+      var hz = Math.max(c.a, c.l), vt = Math.min(c.a, c.l), lados = [hz, vt, hz, vt];
+      var puntas = PUNTA_COD.filter(function (x, i) { return c.forma.esq[i]; });
+      var bordes = BORDE_COD.map(function (x, i) { return c.forma.bordes[i] ? x + ' ' + num(lados[i]) : ''; }).filter(Boolean);
+      filas.push([c.nombre, num(c.cant), num(c.a), num(c.l), puntas.join(' / ') || '-', bordes.join(' / ') || '-']);
+    });
+    filas.push([], ['Referencias: la pieza se mira con el lado más largo arriba (como en el dibujo).'],
+      ['ARR = arriba · ABA = abajo · IZQ = izquierda · DER = derecha. Ej: ARR-IZQ = punta de arriba a la izquierda; ABA 120 = borde de abajo (lado de 120 cm).']);
+    var csv = '\uFEFF' + filas.map(function (f) { return f.map(celda).join(';'); }).join('\r\n');
+    var a = document.createElement('a'), hoy = new Date();
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    a.download = 'cortes-pachalito-' + hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0') + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  };
+  if (!cortes.length) document.querySelector('.botones-dibujo').hidden = true;
 });
 </script>
 
