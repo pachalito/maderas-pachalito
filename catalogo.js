@@ -123,6 +123,10 @@
     items.forEach(function (x) {
       var r = baseDe(x);
       if (r && (r.precio !== x.precio || r.nombre !== x.nombre)) { x.precio = r.precio; x.nombre = r.nombre; if (!x.m2) x.unidad = r.unidad; cambio = true; }
+      if (x.forma) {
+        var ex = extraDe(x.forma), monto = ex.consultar ? 0 : ex.monto;
+        if (monto !== x.extra || ex.consultar !== x.extraConsultar) { x.extra = monto; x.extraConsultar = ex.consultar; cambio = true; }
+      }
     });
     if (cambio) P.guardarPedido(items);
   }
@@ -274,8 +278,13 @@
   var D = window.DIBUJO_CORTE, formas = {};
   var dibujoSVG = D.svg, textoForma = D.texto, formaVacia = D.vacia;
   // Adicional por pieza de las puntas redondeadas y bordes con filo matado (precios en config.js)
+  // Los precios salen de los artículos ADIC-PUNTA y ADIC-FILO (se cargan desde Administración).
+  // Si no existen, se usa config.js. Esos artículos no se muestran en el catálogo.
+  var ADICIONALES = { 'ADIC-PUNTA': 'punta', 'ADIC-FILO': 'filo' }, adic = {};
+  function esAdicional(r) { return ADICIONALES.hasOwnProperty(String(r.codigo || '').toUpperCase()); }
+  function precioAdic(tipo, respaldo) { return adic.hasOwnProperty(tipo) ? (+adic[tipo] || 0) : (+respaldo || 0); }
   function extraDe(f) {
-    var c = D.cuenta(f), pp = +C.precioPunta || 0, pf = +C.precioFilo || 0;
+    var c = D.cuenta(f), pp = precioAdic('punta', C.precioPunta), pf = precioAdic('filo', C.precioFilo);
     return { monto: c.puntas * pp + c.bordes * pf, consultar: !!((c.puntas && !pp) || (c.bordes && !pf)), hay: c.puntas + c.bordes > 0 };
   }
   function extraTxt(x) {
@@ -581,7 +590,8 @@
     function iniciar() {
       cont.innerHTML = '<p class="cargando">Cargando productos…</p>';
       cargar().then(function (d) {
-        datos = d;
+        d.forEach(function (r) { if (esAdicional(r)) adic[ADICIONALES[String(r.codigo).toUpperCase()]] = r.precio; });
+        datos = d.filter(function (r) { return !esAdicional(r); });
         datos.forEach(function (r) { porCodigo[r.codigo] = r; });
         refrescarPrecios();
         render(true);

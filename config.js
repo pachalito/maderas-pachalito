@@ -19,8 +19,9 @@ window.CONFIG = {
   email: '',
 
   // Cortes a medida: precio adicional POR PIEZA de cada punta redondeada y de cada borde
-  // con el filo matado. Solo números, sin puntos ni $. Ejemplo: 1500
-  // Si lo dejás en 0, al cliente le aparece "a consultar".
+  // con el filo matado. Lo mejor es cargarlos desde Administración como artículos con
+  // código ADIC-PUNTA y ADIC-FILO. Estos números se usan solo si esos artículos no existen.
+  // En 0, al cliente le aparece "a consultar".
   precioPunta: 0,
   precioFilo: 0,
 
