@@ -46,7 +46,10 @@
   function precioTxt(r) {
     return r.precio == null ? '<span class="consultar">Consultar precio</span>' : pesos(r.precio) + '<small>' + (esCorte(r) ? ' /m²' : sufijo(r.unidad)) + '</small>';
   }
-  function subtotal(x) { return (x.precio || 0) * x.cant * (x.m2 || 1) + (x.extra || 0) * x.cant; }
+  function subtotal(x) { return (x.precio || 0) * (1 + (x.recargo || 0) / 100) * x.cant * (x.m2 || 1) + (x.extra || 0) * x.cant; }
+  // Recargo (%) para piezas chicas, según config.js
+  function recargoDe(m2) { var lim = +C.piezaChicaM2 || 0, pct = +C.recargoPiezaChica || 0; return lim > 0 && pct > 0 && m2 > 0 && m2 < lim ? pct : 0; }
+  function chicaTxt(pct) { return 'pieza chica (menos de ' + m2Txt(C.piezaChicaM2) + ' m²): +' + P.numero(pct) + '%'; }
   function subtotalTxt(x) { return x.precio == null ? 'A consultar' : pesos(subtotal(x)); }
   function nombreItem(x) { return x.medidas ? x.nombre + ' · corte ' + x.medidas : x.nombre; }
   function baseDe(x) { return porCodigo[x.base || x.codigo]; }
@@ -123,6 +126,7 @@
     items.forEach(function (x) {
       var r = baseDe(x);
       if (r && (r.precio !== x.precio || r.nombre !== x.nombre)) { x.precio = r.precio; x.nombre = r.nombre; if (!x.m2) x.unidad = r.unidad; cambio = true; }
+      if (x.m2 && (x.recargo || 0) !== recargoDe(x.m2)) { x.recargo = recargoDe(x.m2); cambio = true; }
       if (x.forma) {
         var ex = extraDe(x.forma), monto = ex.consultar ? 0 : ex.monto;
         if (monto !== x.extra || ex.consultar !== x.extraConsultar) { x.extra = monto; x.extraConsultar = ex.consultar; cambio = true; }
@@ -336,10 +340,12 @@
     if (!c.a || !c.l) { el.textContent = 'Ingresá ancho y largo'; el.classList.remove('error'); return; }
     if (!c.ok) { el.textContent = 'No entra en una placa: el corte máximo es ' + c.max; el.classList.add('error'); return; }
     el.classList.remove('error');
-    var total = c.m2 * c.n, ex = extraDe(formaDe(codigo));
-    var nota = !ex.hay ? '' : ex.consultar ? 'Puntas y filos: a consultar' : 'Incluye puntas y filos: ' + pesos(ex.monto * c.n);
-    el.innerHTML = '<span>' + m2Txt(total) + ' m²' + (r.precio != null ? ' · <b>' + pesos(r.precio * total + (ex.consultar ? 0 : ex.monto * c.n)) + '</b>' : ' · precio a consultar') +
-      (nota && r.precio != null ? '<small class="extra-corte">' + nota + '</small>' : '') + '</span>';
+    var total = c.m2 * c.n, ex = extraDe(formaDe(codigo)), rec = recargoDe(c.m2);
+    var notas = [];
+    if (rec) notas.push(chicaTxt(rec).charAt(0).toUpperCase() + chicaTxt(rec).slice(1));
+    if (ex.hay) notas.push(ex.consultar ? 'Puntas y filos: a consultar' : 'Incluye puntas y filos: ' + pesos(ex.monto * c.n));
+    el.innerHTML = '<span>' + m2Txt(total) + ' m²' + (r.precio != null ? ' · <b>' + pesos(r.precio * (1 + rec / 100) * total + (ex.consultar ? 0 : ex.monto * c.n)) + '</b>' : ' · precio a consultar') +
+      (notas.length && r.precio != null ? notas.map(function (t) { return '<small class="extra-corte">' + t + '</small>'; }).join('') : '') + '</span>';
   }
   function agregarCorte(codigo) {
     var r = porCodigo[codigo], c = leerCorte(codigo);
@@ -352,6 +358,7 @@
     if (it) it.cant += c.n;
     else {
       var nuevo = { codigo: clave, base: r.codigo, nombre: r.nombre, medidas: medidas, m2: c.m2, precio: r.precio, unidad: 'm²', cant: c.n };
+      if (recargoDe(c.m2)) nuevo.recargo = recargoDe(c.m2);
       if (conForma) {
         var ex = extraDe(f);
         nuevo.a = c.a; nuevo.l = c.l; nuevo.forma = { esq: f.esq.slice(), bordes: f.bordes.slice() }; nuevo.formaTxt = textoForma(f, c.a, c.l);
@@ -389,7 +396,7 @@
     items.forEach(function (x) {
       var u = x.m2 ? 'u.' : unidadTxt(x.unidad);
       var f = baseDe(x) ? fotoUrl(baseDe(x)) : '';
-      var det = x.m2 ? m2Txt(x.m2) + ' m² c/u · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + ' /m²') + (extraTxt(x) ? ' · ' + extraTxt(x) : '')
+      var det = x.m2 ? m2Txt(x.m2) + ' m² c/u · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + ' /m²') + (x.recargo ? ' · ' + chicaTxt(x.recargo) : '') + (extraTxt(x) ? ' · ' + extraTxt(x) : '')
         : esc(x.codigo) + ' · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + sufijo(x.unidad));
       h += '<div class="pedido-item"><div class="arriba">' +
         (f ? '<button type="button" class="btn-foto" data-ver="' + esc(f) + '" data-titulo="' + esc(x.nombre) + '" aria-label="Ver foto grande de ' + esc(x.nombre) + '"><img class="mini-prod" src="' + esc(f) + '" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>' : '') +
@@ -436,9 +443,10 @@
     var lineas = ['Hola! Quiero hacer este pedido:', ''];
     items.forEach(function (x) {
       var precio = x.precio == null ? 'precio a consultar' : pesos(subtotal(x));
-      if (x.m2) lineas.push('• ' + P.numero(x.cant) + (+x.cant === 1 ? ' corte' : ' cortes') + ' de ' + x.medidas + ' de ' + x.nombre + ' (' + m2Txt(x.m2 * x.cant) + ' mt2) — ' + precio);
-      if (x.m2 && x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : '') + (extraTxt(x) ? ' — ' + extraTxt(x) : ''));
-      else lineas.push('• ' + cantMensaje(x) + ' de ' + x.nombre + ' — ' + precio);
+      if (x.m2) {
+        lineas.push('• ' + P.numero(x.cant) + (+x.cant === 1 ? ' corte' : ' cortes') + ' de ' + x.medidas + ' de ' + x.nombre + ' (' + m2Txt(x.m2 * x.cant) + ' mt2' + (x.recargo ? ', pieza chica +' + P.numero(x.recargo) + '%' : '') + ') — ' + precio);
+        if (x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : '') + (extraTxt(x) ? ' — ' + extraTxt(x) : ''));
+      } else lineas.push('• ' + cantMensaje(x) + ' de ' + x.nombre + ' — ' + precio);
     });
     var conDibujo = items.filter(function (x) { return x.forma && x.a && x.l; });
     if (conDibujo.length) {

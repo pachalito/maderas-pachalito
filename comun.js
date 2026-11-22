@@ -22,7 +22,7 @@
     document.dispatchEvent(new CustomEvent('pedido-cambio'));
   }
   function totalPedido(items) {
-    return items.reduce(function (s, it) { return s + (it.precio || 0) * it.cant * (it.m2 || 1) + (it.extra || 0) * it.cant; }, 0);
+    return items.reduce(function (s, it) { return s + (it.precio || 0) * (1 + (it.recargo || 0) / 100) * it.cant * (it.m2 || 1) + (it.extra || 0) * it.cant; }, 0);
   }
 
   // ---------- WhatsApp ----------

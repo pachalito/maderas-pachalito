@@ -25,6 +25,11 @@ window.CONFIG = {
   precioPunta: 0,
   precioFilo: 0,
 
+  // Piezas chicas: si una pieza mide menos de estos m², el precio del m² lleva un recargo.
+  // Se mira cada pieza por separado. Para no usar recargo, poné recargoPiezaChica: 0
+  piezaChicaM2: 0.25,
+  recargoPiezaChica: 50,   // en %
+
   // Conexión con Supabase (no tocar)
   supabaseUrl: 'https://qgimqttnilnqudswwhke.supabase.co',
   supabaseKey: 'sb_publishable_iW6t71iHGRDsrYZfhfrfAw_ygTzKpTb'
