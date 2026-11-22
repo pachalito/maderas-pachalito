@@ -57,7 +57,8 @@
     <p class="subtitulo">Cada pieza se dibuja con el lado más largo acostado. Las puntas rojas van <b>redondeadas</b> y los bordes con <span class="x">✕</span> van con el <b>filo matado</b>.</p>
     <div id="piezas"></div>
     <div class="botones-dibujo">
-      <button type="button" class="btn btn-principal" id="excel">Descargar para Excel</button>
+      <button type="button" class="btn btn-principal" id="excel">Descargar Excel</button>
+      <button type="button" class="btn" id="csv">Descargar CSV</button>
       <button type="button" class="btn" id="imprimir">Imprimir o guardar PDF</button>
     </div>
   </div>
@@ -77,26 +78,83 @@ document.addEventListener('DOMContentLoaded', function () {
   document.getElementById('piezas').innerHTML = h || '<p class="aviso">No hay piezas para mostrar. Revisá que el link esté completo.</p>';
   document.getElementById('imprimir').onclick = function () { window.print(); };
 
-  // Archivo CSV para Excel: separado por ";" y con coma decimal, como lo espera Excel en Argentina
+  // ---------- Descargas: Excel (.xlsx, con dibujo) y CSV ----------
   var PUNTA_COD = ['ARR-IZQ', 'ARR-DER', 'ABA-DER', 'ABA-IZQ'], BORDE_COD = ['ARR', 'DER', 'ABA', 'IZQ'];
-  function celda(v) { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
   function num(v) { return String(+(+v).toFixed(2)).replace('.', ','); }
-  document.getElementById('excel').onclick = function () {
-    var filas = [['Material', 'Cantidad', 'Ancho (cm)', 'Largo (cm)', 'Puntas redondas', 'Filo matado']];
-    cortes.forEach(function (c) {
-      var hz = Math.max(c.a, c.l), vt = Math.min(c.a, c.l), lados = [hz, vt, hz, vt];
-      var puntas = PUNTA_COD.filter(function (x, i) { return c.forma.esq[i]; });
-      var bordes = BORDE_COD.map(function (x, i) { return c.forma.bordes[i] ? x + ' ' + num(lados[i]) : ''; }).filter(Boolean);
-      filas.push([c.nombre, num(c.cant), num(c.a), num(c.l), puntas.join(' / ') || '-', bordes.join(' / ') || '-']);
-    });
-    filas.push([], ['Referencias: la pieza se mira con el lado más largo arriba (como en el dibujo).'],
-      ['ARR = arriba · ABA = abajo · IZQ = izquierda · DER = derecha. Ej: ARR-IZQ = punta de arriba a la izquierda; ABA 120 = borde de abajo (lado de 120 cm).']);
-    var csv = '\uFEFF' + filas.map(function (f) { return f.map(celda).join(';'); }).join('\r\n');
-    var a = document.createElement('a'), hoy = new Date();
-    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    a.download = 'cortes-pachalito-' + hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0') + '.csv';
+  function hoyTxt() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function datosPieza(c) {
+    var hz = Math.max(c.a, c.l), vt = Math.min(c.a, c.l), lados = [hz, vt, hz, vt];
+    var puntas = PUNTA_COD.filter(function (x, i) { return c.forma.esq[i]; });
+    var bordes = BORDE_COD.map(function (x, i) { return c.forma.bordes[i] ? x + ' ' + num(lados[i]) : ''; }).filter(Boolean);
+    return { puntas: puntas.join(' / ') || '-', bordes: bordes.join(' / ') || '-' };
+  }
+  // Dibujo con caracteres (lado más largo horizontal):  / \ = punta redondeada,  × = filo matado
+  function dibujoTexto(c) {
+    var f = c.forma, hz = Math.max(c.a, c.l), vt = Math.min(c.a, c.l);
+    var W = 16, H = Math.max(1, Math.min(7, Math.round(W * vt / hz / 2)));
+    var esq = [f.esq[0] ? '/' : '┌', f.esq[1] ? '\\' : '┐', f.esq[2] ? '/' : '┘', f.esq[3] ? '\\' : '└'];
+    var hor = function (i) { return new Array(W + 1).join(f.bordes[i] ? '×' : '─'); };
+    var lin = [esq[0] + hor(0) + esq[1]];
+    for (var i = 0; i < H; i++) lin.push((f.bordes[3] ? '×' : '│') + new Array(W + 1).join(' ') + (f.bordes[1] ? '×' : '│'));
+    lin.push(esq[3] + hor(2) + esq[2]);
+    return lin.join('\n');
+  }
+  var REFS = ['Referencias: la pieza se mira con el lado más largo arriba (como en el dibujo).',
+    'ARR = arriba · ABA = abajo · IZQ = izquierda · DER = derecha. Ej: ARR-IZQ = punta de arriba a la izquierda; ABA 120 = borde de abajo (lado de 120 cm).',
+    'En el dibujo: / o \\ en una esquina = punta redondeada · × en un borde = filo matado.'];
+  function bajar(blob, nombre) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = nombre;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 2000);
+  }
+
+  // CSV: separado por ";" y con coma decimal, como lo espera Excel en Argentina
+  function celda(v) { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }
+  document.getElementById('csv').onclick = function () {
+    var filas = [['Material', 'Cantidad', 'Ancho (cm)', 'Largo (cm)', 'Puntas redondas', 'Filo matado']];
+    cortes.forEach(function (c) { var d = datosPieza(c); filas.push([c.nombre, num(c.cant), num(c.a), num(c.l), d.puntas, d.bordes]); });
+    filas.push([]); REFS.slice(0, 2).forEach(function (r) { filas.push([r]); });
+    bajar(new Blob(['﻿' + filas.map(function (f) { return f.map(celda).join(';'); }).join('\r\n')], { type: 'text/csv;charset=utf-8' }), 'cortes-pachalito-' + hoyTxt() + '.csv');
+  };
+
+  // Excel: la librería se carga recién cuando se toca el botón
+  function cargarXLSX() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    return new Promise(function (ok, mal) {
+      var s = document.createElement('script');
+      s.src = 'lib/xlsx-js-style.min.js'; s.onload = function () { ok(window.XLSX); }; s.onerror = mal;
+      document.head.appendChild(s);
+    });
+  }
+  document.getElementById('excel').onclick = function () {
+    var btn = this, txt = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Preparando…';
+    cargarXLSX().then(function (X) {
+      var borde = { style: 'thin', color: { rgb: 'CFC3B2' } }, bordes = { top: borde, bottom: borde, left: borde, right: borde };
+      var filas = [['Material', 'Cantidad', 'Ancho (cm)', 'Largo (cm)', 'Puntas redondas', 'Filo matado', 'Dibujo']], alturas = [{ hpt: 20 }];
+      cortes.forEach(function (c) {
+        var d = datosPieza(c), dib = dibujoTexto(c);
+        filas.push([c.nombre, +c.cant, +c.a, +c.l, d.puntas, d.bordes, dib]);
+        alturas.push({ hpt: dib.split('\n').length * 15 + 6 });
+      });
+      filas.push([]); REFS.forEach(function (r) { filas.push([r]); });
+      var ws = X.utils.aoa_to_sheet(filas);
+      for (var r = 0; r <= cortes.length; r++) for (var k = 0; k < 7; k++) {
+        var ref = X.utils.encode_cell({ r: r, c: k }), cel = ws[ref]; if (!cel) continue;
+        cel.s = r === 0
+          ? { font: { bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: 'D2000A' } }, alignment: { vertical: 'center', wrapText: true }, border: bordes }
+          : { alignment: { vertical: 'center', wrapText: true }, border: bordes };
+        if (r && k === 6) cel.s.font = { name: 'Consolas', sz: 11 };
+        if (r && k >= 1 && k <= 3) cel.s.alignment.horizontal = 'center';
+      }
+      ws['!cols'] = [{ wch: 26 }, { wch: 10 }, { wch: 11 }, { wch: 11 }, { wch: 38 }, { wch: 26 }, { wch: 22 }];
+      ws['!rows'] = alturas;
+      var wb = X.utils.book_new();
+      X.utils.book_append_sheet(wb, ws, 'Cortes');
+      X.writeFile(wb, 'cortes-pachalito-' + hoyTxt() + '.xlsx');
+    }).catch(function () { alert('No se pudo armar el Excel. Probá con "Descargar CSV".'); })
+      .then(function () { btn.disabled = false; btn.textContent = txt; });
   };
   if (!cortes.length) document.querySelector('.botones-dibujo').hidden = true;
 });
