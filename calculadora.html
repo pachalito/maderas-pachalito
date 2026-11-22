@@ -1,0 +1,893 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculá tu techo · Maderas Pachalito</title>
+<meta name="description" content="Calculá los materiales y el precio de tu techo de madera: cabios, vigas, machimbre, aislación y chapa.">
+<meta name="theme-color" content="#D2000A">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap">
+<link rel="stylesheet" href="estilos.css?v=20261115b">
+<script src="config.js?v=20261115b"></script>
+<script src="comun.js?v=20261115b" defer></script>
+<style>
+.calc{
+  --bg:#F5F0E8; --surface:#ffffff; --ink:#2A2118; --muted:#5A4C3C; --line:#E2D9CC;
+  --pine:#a8690a; --pine-soft:#f6e9d2; --plan:#2c5878; --warn:#b3401b; --warn-soft:#fbe6dd; --ok:#2f7a4a;
+  --f-display:var(--serif); --f-body:var(--sans); --f-mono:ui-monospace,Menlo,Consolas,monospace;
+}
+.calc{margin:0}
+.calc{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.calc .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.calc header h1{font-family:var(--f-display);font-weight:700;font-size:clamp(2rem,5vw,2.9rem);line-height:1;margin:0;letter-spacing:.01em;text-wrap:balance}
+.calc header p{margin:6px 0 0;color:var(--muted);max-width:64ch}
+.calc .grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:880px){.calc .grid{grid-template-columns:1fr}}
+.calc .col{display:flex;flex-direction:column;gap:20px;min-width:0}
+.calc .panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.calc .panel h2{font-family:var(--f-display);font-weight:700;font-size:1.45rem;margin:0;letter-spacing:.01em}
+.calc .panel h2 small{font-family:var(--f-body);font-weight:400;font-size:.9rem;color:var(--muted);margin-left:6px;letter-spacing:0}
+.calc .label{font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:700}
+.calc .fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:520px){.calc .fields{grid-template-columns:1fr}}
+.calc .field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.calc .field .hint{font-size:.85rem;color:var(--muted)}
+.calc input[type=text],.calc select{font:inherit;font-family:var(--f-mono);font-size:1.02rem;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--ink);width:100%}
+.calc select{font-family:var(--f-body)}
+.calc input:focus-visible,.calc select:focus-visible,.calc button:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+.calc .unit{position:relative}
+.calc .unit input{padding-right:34px}
+.calc .unit span{position:absolute;right:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-family:var(--f-mono);font-size:.9rem;pointer-events:none}
+.calc .seg{display:flex;flex-wrap:wrap;gap:6px}
+.calc .seg button{font:inherit;font-weight:600;padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:7px}
+.calc .seg button[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.calc .badge{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--pine-soft);color:var(--pine)}
+.calc .seg button[aria-pressed=true] .badge{background:var(--pine);color:var(--surface)}
+.calc .note{font-size:.92rem;padding:10px 12px;border-radius:7px;background:var(--bg);border-left:3px solid var(--plan)}
+.calc .note.warn{background:var(--warn-soft);border-left-color:var(--warn)}
+.calc .note.sug{background:var(--pine-soft);border-left-color:var(--pine)}
+.calc .notes{display:flex;flex-direction:column;gap:8px}
+.calc .notes:empty{display:none}
+.calc .plan-box{overflow-x:auto;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.calc #plan{display:block;width:100%;height:auto;max-height:560px;min-width:320px;user-select:none;-webkit-user-select:none}
+.calc #plan .hit{touch-action:none;cursor:ns-resize}
+.calc #plan .hx,.calc #plan .hv{touch-action:none;cursor:ew-resize}
+.calc #plan .hy{touch-action:none;cursor:ns-resize}
+.calc .wall.viga .name{color:var(--plan)}
+.calc .wall.vrow{grid-template-columns:auto minmax(84px,110px) auto}
+@media (max-width:560px){.calc .wall.vrow{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.calc .wall .tag{display:block;font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.03em}
+.calc .walls{display:flex;flex-direction:column;gap:10px}
+.calc .wall{display:grid;grid-template-columns:auto repeat(3,minmax(84px,110px)) auto;gap:8px 10px;align-items:end;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.calc .wall:last-child{border-bottom:0}
+.calc .wall .name{font-weight:700;align-self:center;min-width:62px}
+.calc .wall .mini{display:flex;flex-direction:column;gap:3px;min-width:0}
+.calc .wall .mini span.l{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.calc .wall .acts{display:flex;gap:4px;flex-wrap:wrap}
+.calc .wall.fixedrow{grid-template-columns:auto 1fr}
+.calc .wall .fixed{font-family:var(--f-mono);color:var(--muted);font-size:.92rem}
+@media (max-width:560px){.calc .wall{grid-template-columns:repeat(3,minmax(0,1fr))}
+.calc .wall .name{grid-column:1/-1}
+.calc .wall .acts{grid-column:1/-1}}
+.calc .btn{font:inherit;font-weight:600;padding:8px 14px;border-radius:7px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.calc .btn.primary{background:var(--pine);border-color:var(--pine);color:#fff}
+.calc .btn.small{padding:6px 10px;font-size:.9rem}
+.calc .btn.ghost{border-color:transparent;color:var(--warn);padding:6px 8px;font-size:.9rem}
+.calc .row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.calc .sticky{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}
+@media (max-width:880px){.calc .sticky{position:static}}
+.calc .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.calc .stat{background:var(--bg);border-radius:7px;padding:8px 10px;min-width:0}
+.calc .stat .v{font-family:var(--f-mono);font-size:1.05rem;font-variant-numeric:tabular-nums}
+.calc .stat .k{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.calc .list{display:flex;flex-direction:column}
+.calc .item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:11px 0;border-top:1px solid var(--line)}
+.calc .item:first-child{border-top:0}
+.calc .item .n{font-weight:700}
+.calc .item .d{grid-column:1;font-size:.88rem;color:var(--muted)}
+.calc .item .q{grid-row:1/span 2;grid-column:2;font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right;font-size:1.02rem;white-space:nowrap}
+.calc .item .q small{display:block;font-size:.78rem;color:var(--muted)}
+.calc .item.alert .n{color:var(--warn)}
+.calc .item.alert .q{color:var(--warn)}
+.calc .foot{font-size:.85rem;color:var(--muted)}
+.calc .toast{font-size:.88rem;color:var(--ok);font-weight:600}
+@media (prefers-reduced-motion:no-preference){.calc .seg button,.calc .btn{transition:background .15s,border-color .15s}}
+/* Ajustes para convivir con el sitio */
+.calc{padding:20px 16px 48px!important;background:var(--bg)}
+.calc .btn{min-height:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:7px;font-size:inherit}
+.calc .btn.primary{background:var(--rojo);border-color:var(--rojo)}
+.calc .btn.primary:hover{background:var(--rojo-osc)}
+.calc .btn.big{padding:12px 18px;font-size:1.05rem}
+.calc .sticky{top:88px;max-height:calc(100vh - 104px)}
+.calc .sticky .list{overflow:auto;min-height:0;flex:1 1 auto;margin-right:-8px;padding-right:8px}
+@media (max-width:880px){.calc .sticky{max-height:none}.calc .sticky .list{overflow:visible}}
+.calc .item .p{grid-column:2;text-align:right;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.calc .item .p.cons{font-weight:600;color:var(--muted);font-size:.9rem}
+.calc .item .d{grid-row:2}
+.calc .total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:2px solid var(--ink);padding-top:12px}
+.calc .total b{font-size:1.5rem;font-variant-numeric:tabular-nums}
+.calc .total span{font-weight:700}
+.calc .total small{display:block;font-weight:400;color:var(--muted);font-size:.85rem}
+
+</style>
+</head>
+<body>
+<header class="encabezado">
+  <div class="contenedor">
+    <a class="marca" href="index.html" aria-label="Maderas Pachalito, inicio">
+      <img src="logo.svg" alt="" width="88" height="48">
+      <span class="marca-txt">Maderas · Melaminas<br>Fenólicos · Chapas<br>Molduras</span>
+    </a>
+    <nav class="nav-pc" aria-label="Principal">
+      <a href="index.html">Inicio</a>
+      <a href="productos.html">Productos</a>
+      <a href="servicios.html">Servicios</a>
+      <a href="calculadora.html" aria-current="page">Calculá tu techo</a>
+      <a href="contacto.html">Contacto</a>
+    </nav>
+    <div class="acciones">
+      <a class="btn-redondo rojo" data-whatsapp href="#" aria-label="Escribinos por WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      </a>
+      <details class="menu-movil">
+        <summary class="btn-redondo" aria-label="Abrir menú">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </summary>
+        <nav aria-label="Menú">
+          <a href="index.html">Inicio</a>
+          <a href="productos.html">Productos y precios</a>
+          <a href="productos.html#pedido">Mi pedido (<span data-globo>0</span>)</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="calculadora.html" aria-current="page">Calculá tu techo</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main class="calc">
+<div class="wrap">
+  <header>
+    <h1>Calculá los materiales de tu techo</h1>
+    <p>Cargá las medidas, marcá todas las paredes donde apoyan los cabios y te armamos la lista de madera, aislación y chapa. Para empezar ya están las cuatro paredes: la de la cumbrera, la de abajo con un alero de 0,40 m y las dos de los costados. Modificalas o agregá las que falten.</p>
+  </header>
+
+  <div class="grid">
+    <div class="col">
+      <section class="panel" aria-labelledby="t1">
+        <h2 id="t1">1. Medidas del techo</h2>
+        <div class="field">
+          <span class="label">Tipo de techo</span>
+          <div class="seg" id="tipo">
+            <button type="button" data-v="1">A un agua</button>
+            <button type="button" data-v="2">A dos aguas</button>
+          </div>
+        </div>
+        <div class="fields">
+          <div class="field">
+            <label class="label" for="frente">Frente del techo</label>
+            <div class="unit"><input type="text" id="frente" inputmode="decimal"><span>m</span></div>
+            <span class="hint">El lado donde se reparten los cabios (paralelo a la cumbrera).</span>
+          </div>
+          <div class="field">
+            <label class="label" for="largo">Largo final del cabio</label>
+            <div class="unit"><input type="text" id="largo" inputmode="decimal"><span>m</span></div>
+            <span class="hint" id="largoHint"></span>
+          </div>
+          <div class="field">
+            <label class="label" for="sep">Separación de cabios</label>
+            <select id="sep">
+              <option value="0.50">Cada 50 cm (recomendado)</option>
+              <option value="0.55">Cada 55 cm</option>
+              <option value="0.60">Cada 60 cm (máximo)</option>
+              <option value="manual">Elijo la cantidad</option>
+            </select>
+          </div>
+          <div class="field" id="cantField" hidden>
+            <label class="label" for="cant">Cabios por agua</label>
+            <input type="text" id="cant" inputmode="numeric">
+          </div>
+        </div>
+        <div class="notes" id="sepNote"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="t2">
+        <h2 id="t2">2. Marcá todas las paredes <small>vista desde arriba</small></h2>
+        <p class="foot" style="margin:0">Marcá todas las paredes con su largo real: las que <b>cruzan los cabios</b> (donde apoyan) y las que van <b>en el mismo sentido que los cabios</b> (laterales o interiores), que sirven para apoyar vigas. Donde no hay pared (un portón, una galería, un ventanal) dejá el hueco: te avisamos si hace falta una viga. Arrastrá las paredes para moverlas y usá los puntos de las puntas para acortarlas.</p>
+        <div class="field">
+          <span class="label">Al tocar el dibujo, agregar</span>
+          <div class="seg" id="modo">
+            <button type="button" data-v="h">Pared que cruza los cabios</button>
+            <button type="button" data-v="v">Pared paralela a los cabios</button>
+          </div>
+        </div>
+        <div class="plan-box"><svg id="plan" role="img" aria-label="Plano del techo con cabios, paredes y vigas"></svg></div>
+        <div class="walls" id="walls"></div>
+        <div class="row-actions">
+          <button type="button" class="btn" id="addWall">+ Pared que cruza</button>
+          <button type="button" class="btn" id="addWallV">+ Pared paralela</button>
+          <span class="foot">Las medidas se toman desde la cumbrera (arriba en el dibujo) y desde la izquierda.</span>
+        </div>
+        <div class="notes" id="apoyoNote"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="t3">
+        <h2 id="t3">3. Elegí los materiales</h2>
+        <div class="field">
+          <span class="label">Sección del cabio</span>
+          <div class="seg" id="seccion">
+            <button type="button" data-v="2x5"></button>
+            <button type="button" data-v="2x6"></button>
+          </div>
+        </div>
+        <div class="notes" id="secNote"></div>
+        <div class="fields">
+          <div class="field">
+            <label class="label" for="madera">Madera de cabios, vigas y clavaderas</label>
+            <select id="madera">
+              <option value="E">Pino Elliotti cepillado</option>
+              <option value="EB">Pino Elliotti bruto</option>
+              <option value="P">Pino Paraná cepillado</option>
+              <option value="PB">Pino Paraná bruto</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="mach">Machimbre</label>
+            <select id="mach">
+              <option value="MA3">Pino Elliotti 1/2" x 3"</option>
+              <option value="MA4">Pino Elliotti 1/2" x 4"</option>
+              <option value="MA5">Pino Elliotti 1/2" x 5"</option>
+              <option value="MA6">Pino Elliotti 1/2" x 6"</option>
+              <option value="MA1X5">Pino Elliotti 1" x 5"</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="chapa">Chapa</label>
+            <select id="chapa">
+              <option value="C25S">Cincalum calibre 25 sinusoidal</option>
+              <option value="C25T">Cincalum calibre 25 trapezoidal</option>
+              <option value="C27S">Cincalum calibre 27 sinusoidal</option>
+              <option value="C27T">Cincalum calibre 27 trapezoidal</option>
+              <option value="G27S">Galvanizada calibre 27 sinusoidal</option>
+              <option value="CN25S">Cincalum 25 sinusoidal color negra</option>
+              <option value="CN25T">Cincalum 25 trapezoidal color negra</option>
+              <option value="CC25S">Cincalum 25 sinusoidal color</option>
+              <option value="CC25T">Cincalum 25 trapezoidal color</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="ais">Aislante</label>
+            <select id="ais">
+              <option value="tg2">Telgopor 2 cm (planchas 1 x 1 m)</option>
+              <option value="tg4">Telgopor 4 cm (planchas 1 x 1 m)</option>
+              <option value="esp5">Espuma 5 mm (rollos de 10 y 20 m²)</option>
+              <option value="esp10">Espuma 10 mm (rollos de 10 y 20 m²)</option>
+              <option value="burb">Burbuja (rollos de 15 y 30 m²)</option>
+              <option value="lana">Lana de vidrio (rollos de 21,60 m²)</option>
+            </select>
+          </div>
+          <div class="field">
+            <span class="label">Clavaderas para la chapa</span>
+            <div class="seg" id="clav">
+              <button type="button" data-v="2x2">2" x 2" <span class="badge">Recomendado</span></button>
+              <button type="button" data-v="1x2">1" x 2"</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="label" for="clavModo">Filas de clavaderas</label>
+            <select id="clavModo">
+              <option value="auto">Cada 80 cm (recomendado)</option>
+              <option value="manual">Elijo la cantidad</option>
+            </select>
+          </div>
+          <div class="field" id="clavField" hidden>
+            <label class="label" for="clavFilas">Filas por agua</label>
+            <input type="text" id="clavFilas" inputmode="numeric">
+          </div>
+        </div>
+        <div class="notes" id="clavNote"></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="panel sticky" aria-labelledby="t4">
+        <h2 id="t4">Lo que necesitás</h2>
+        <div class="stats" id="stats"></div>
+        <div class="list" id="list"></div>
+        <div class="total" id="total"></div>
+        <div class="row-actions">
+          <button type="button" class="btn primary big" id="alPedido">Agregar todo al pedido</button>
+          <button type="button" class="btn" id="copy">Copiar lista</button>
+          <span class="toast" id="toast" aria-live="polite"></span>
+        </div>
+        <p class="foot" style="margin:0">Cantidades y precios estimados. Al agregarlo al pedido lo podés revisar y mandar por WhatsApp; te confirmamos stock y precio final. No incluye clavos, tornillos ni canaletas.</p>
+      </section>
+    </div>
+  </div>
+</div>
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <div><b>Maderas Pachalito</b><span data-dato="direccion"></span><span class="pie-titulo">Atención al público (horario reducido)</span><span data-dato="horarios"></span><span data-si-retiro><span class="pie-titulo">Retiro de pedidos</span><span data-dato="retiro"></span></span></div>
+    <div><b>Contacto</b><a data-whatsapp href="#">WhatsApp</a><br><span data-dato="telefono"></span></div>
+    <div>
+      <nav aria-label="Pie de página"><a href="index.html">Inicio</a><a href="productos.html">Productos</a><a href="servicios.html">Servicios</a><a href="calculadora.html">Calculá tu techo</a><a href="contacto.html">Contacto</a></nav>
+      <small>© <span data-anio></span> Maderas Pachalito · <a href="admin.html" rel="nofollow" style="color:inherit">Administración</a></small>
+    </div>
+  </div>
+</footer>
+<script>
+/* ===== Datos del corralón ===== */
+const LARGOS_2X5=[1.53,1.83,2.15,2.45,2.75,3.06,3.36,3.66,3.96,4.27,4.57,4.87,5.17,5.47];
+const LARGOS_2X6=[...LARGOS_2X5,6.12];          // 6,12 solo en 2x6
+const LARGOS_VIGA=LARGOS_2X6;                    // 3x6 y 3x8: de 1,53 a 6,12
+const C={
+  sepMax:0.60,          // cabios: no más de 60 cm
+  luz2x6:3.96,          // desde esta luz se sugiere 2x6
+  vigaGrande:2.15,      // desde este tramo la viga va de 3x8 (menos: 3x6)
+  clavSep:0.80,         // clavaderas: una al principio y cada 80 cm
+  clavResto:0.50,       // si sobra menos de esto, se reparte; si no, una fila más
+  clavAviso:0.90,       // aviso suave si quedan más separadas
+  chapaTotal:1.10, chapaUtil:1.00,
+  despMach:20,          // % desperdicio machimbre (el ruberoid usa estos m²)
+  rollosRub:[40,20,10], // ruberoid, no se fracciona
+  solapeAis:10          // % solape espuma y burbuja
+};
+const AISL={
+  tg2:{n:"Telgopor 2 cm",plancha:true},
+  tg4:{n:"Telgopor 4 cm",plancha:true},
+  esp5:{n:"Espuma 5 mm",rollos:[20,10],solape:true},
+  esp10:{n:"Espuma 10 mm",rollos:[20,10],solape:true},
+  burb:{n:"Burbuja",rollos:[30,15],solape:true},
+  lana:{n:"Lana de vidrio",util:20,trae:21.6}
+};
+
+/* ===== Estado (ejemplo inicial) ===== */
+/* Paredes: sin dir = cruza los cabios {y,x1,x2}; dir:"v" = paralela a los cabios {x,y1,y2} */
+const S={tipo:1,frente:6,largo:5,sep:"0.50",cant:13,sec:null,clav:"2x2",clavModo:"auto",clavFilas:7,ais:"tg2",modo:"h",madera:"E",mach:"MA4",chapa:"C25S",
+  paredes:[{y:5.00,x1:0,x2:6},{y:0.40,x1:0,x2:6},{dir:"v",x:0,y1:0.40,y2:5.00},{dir:"v",x:6,y1:0.40,y2:5.00}],
+  vigasExtra:[]};
+
+const $=id=>document.getElementById(id);
+/* Las medidas se muestran desde arriba (la cumbrera); por dentro se guardan desde abajo */
+const dA=y=>Math.max(0,Math.round((fondo()-y)*100)/100);
+const REF=()=>S.tipo===1?"de la cumbrera":"del borde de arriba";
+const LBL=()=>S.tipo===1?"Desde la cumbrera":"Desde arriba";
+const EPS=1e-6;
+const num=v=>{const n=parseFloat(String(v).replace(",","."));return isFinite(n)?n:NaN};
+const f=(n,d=2)=>n.toLocaleString("es-AR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const r2=v=>Math.round(v*100)/100;
+const r5=v=>Math.round(v*20)/20;
+const fondo=()=>S.tipo===2?S.largo*2:S.largo;
+const pulg=s=>s.replace("x","\" x ")+'"';
+const esV=p=>p.dir==="v";
+const hW=()=>S.paredes.filter(p=>!esV(p));
+const vW=()=>S.paredes.filter(esV);
+
+/* Piezas comerciales para cubrir un largo (1, 2 o 3 piezas, el menor total) */
+function piezas(L,lista){
+  for(const l of lista) if(l>=L-EPS) return [l];
+  let best=null;
+  const consider=p=>{const s=p.reduce((a,b)=>a+b,0);if(s<L-EPS)return;const d=Math.max(...p)-Math.min(...p);
+    if(!best||s<best.s-EPS||(Math.abs(s-best.s)<EPS&&(p.length<best.p.length||d<best.d)))best={s,d,p}};
+  for(const a of lista)for(const b of lista)if(b<=a)consider([a,b]);
+  if(!best)for(const a of lista)for(const b of lista)for(const c of lista)if(b<=a&&c<=b)consider([a,b,c]);
+  return best?best.p:null;
+}
+/* Rollos enteros: lo que menos sobre, y con menos rollos */
+function rollos(need,sizes){
+  const sz=[...sizes].sort((a,b)=>b-a),big=sz[0];let best=null;
+  const rec=(i,acc,total,cnt)=>{
+    if(i===sz.length){if(total<need-EPS)return;const ex=total-need;
+      if(!best||ex<best.ex-EPS||(Math.abs(ex-best.ex)<EPS&&cnt<best.cnt))best={ex,cnt,acc:[...acc],total};return}
+    const max=i===0?Math.ceil(need/big)+1:Math.ceil(big/sz[i]);
+    for(let k=0;k<=max;k++){acc.push(k);rec(i+1,acc,total+k*sz[i],cnt+k);acc.pop()}};
+  rec(0,[],0,0);
+  const partes=sz.map((s,i)=>({s,k:best.acc[i]})).filter(p=>p.k>0);
+  return {partes,total:best.total,cnt:best.cnt};
+}
+const txtRollos=r=>r.partes.map(p=>`${p.k} de ${f(p.s,0)} m²`).join(" + ");
+
+function cabios(){
+  let n;
+  if(S.sep==="manual")n=Math.max(2,Math.round(S.cant)||2);
+  else n=Math.ceil(S.frente/parseFloat(S.sep)-EPS)+1;
+  const sep=S.frente/(n-1);
+  return {n,sep,xs:Array.from({length:n},(_,i)=>i===n-1?S.frente:i*sep)};
+}
+
+/* ===== Análisis de apoyos ===== */
+function lineas(){
+  const ls=[];
+  [...hW()].sort((a,b)=>a.y-b.y).forEach(p=>{
+    let l=ls.find(l=>Math.abs(l.y-p.y)<0.03);
+    if(!l){l={y:p.y,segs:[]};ls.push(l)}
+    l.segs.push([Math.min(p.x1,p.x2),Math.max(p.x1,p.x2)]);
+  });
+  return ls;
+}
+function huecos(segs,F){
+  const s=[...segs].sort((a,b)=>a[0]-b[0]);const g=[];let cur=0;
+  for(const [a,b] of s){if(a>cur+0.05)g.push([cur,a]);cur=Math.max(cur,b)}
+  if(F>cur+0.05)g.push([cur,F]);return g;
+}
+/* Paredes paralelas que pasan por la altura y: ahí puede apoyar una viga */
+function apoyosEn(y){
+  return [...new Set(vW().filter(p=>y>=Math.min(p.y1,p.y2)-0.03&&y<=Math.max(p.y1,p.y2)+0.03).map(p=>r2(p.x)))].sort((a,b)=>a-b);
+}
+/* Arma una viga de g1 a g2 a la altura y: tramos entre apoyos y columnas que faltan */
+const VOLADO_VIGA=0.60;
+function armarViga(v){
+  const F=S.frente,xs=apoyosEn(v.y);
+  const interior=x=>x>0.05&&x<F-0.05;     // la punta toca el final de una pared que cruza
+  const P=xs.filter(x=>x>v.g1-0.01&&x<v.g2+0.01);
+  const pts=[...P];
+  let cols=0;const colsX=[];
+  // punta izquierda
+  if(interior(v.g1)&&!v.extra)pts.push(v.g1);
+  else if(!P.some(x=>x-v.g1<=VOLADO_VIGA+EPS)){pts.push(v.g1);cols++;colsX.push(v.g1)}
+  // punta derecha
+  if(interior(v.g2)&&!v.extra)pts.push(v.g2);
+  else if(!P.some(x=>v.g2-x<=VOLADO_VIGA+EPS)){pts.push(v.g2);cols++;colsX.push(v.g2)}
+  const ps=[...new Set(pts.map(r2))].sort((a,b)=>a-b);
+  const tramos=[];
+  for(let i=1;i<ps.length;i++){
+    const L=ps[i]-ps[i-1];if(L<0.05)continue;
+    let largo=L;if(i===1)largo+=ps[0]-v.g1;if(i===ps.length-1)largo+=v.g2-ps[ps.length-1];
+    const sec=L>=C.vigaGrande-EPS?"3x8":"3x6";
+    const pieza=largo<=LARGOS_VIGA[LARGOS_VIGA.length-1]+EPS?LARGOS_VIGA.find(l=>l>=largo-EPS):null;
+    tramos.push({a:ps[i-1],b:ps[i],L,largo,sec,pieza});
+  }
+  if(!tramos.length){const L=v.g2-v.g1;tramos.push({a:v.g1,b:v.g2,L,largo:L,sec:"3x6",pieza:LARGOS_VIGA.find(l=>l>=L-EPS)})}
+  return {...v,L:v.g2-v.g1,tramos,cols,colsX,apoyos:P.length};
+}
+function analizar(){
+  const R=S.largo,F=S.frente,T=fondo(),dos=S.tipo===2;
+  const cb=cabios();
+  const lados=dos?[[0,R],[R,T]]:[[0,R]];
+  const ladoDe=y=>dos&&y>R?1:0;
+  const sop=(x,extra)=>{const ys=hW().filter(p=>x>=Math.min(p.x1,p.x2)-EPS&&x<=Math.max(p.x1,p.x2)+EPS).map(p=>p.y);
+    extra.forEach(v=>{if(x>=v.g1-EPS&&x<=v.g2+EPS)ys.push(v.y)});return ys};
+  const estado=(extra)=>cb.xs.map(x=>{
+    const ys=sop(x,extra);const res=[];
+    lados.forEach(([a,b],li)=>{
+      let s=ys.filter(y=>y>=a-EPS&&y<=b+EPS);if(dos)s.push(R);
+      s=[...new Set(s.map(r2))].sort((p,q)=>p-q);
+      const ok=s.length>=2;let luz=0,par=null;
+      for(let i=1;i<s.length;i++)if(s[i]-s[i-1]>luz){luz=s[i]-s[i-1];par=[s[i-1],s[i]]}
+      let vol=0;if(s.length){if(!dos)vol=Math.max(s[0]-a,b-s[s.length-1]);else vol=li===0?s[0]-a:b-s[s.length-1]}
+      res.push({ok,luz,vol,par});
+    });return res});
+  const extras=S.vigasExtra.map(y=>armarViga({y,g1:0,g2:F,extra:true}));
+  // 1ra pasada (con las vigas intermedias que eligió el cliente): huecos que necesitan viga
+  const e0=estado(extras);
+  const vigas=[];
+  const ls=lineas();
+  ls.forEach(l=>{
+    if(dos&&Math.abs(l.y-R)<0.03)return;
+    huecos(l.segs,F).forEach(([g1,g2])=>{
+      const dentro=cb.xs.map((x,i)=>i).filter(i=>cb.xs[i]>g1+EPS&&cb.xs[i]<g2-EPS);
+      const li=ladoDe(l.y);
+      if(dentro.some(i=>!e0[i][li].ok))vigas.push(armarViga({y:l.y,g1,g2}));
+    });
+  });
+  if(dos){
+    const lr=ls.find(l=>Math.abs(l.y-R)<0.03);
+    huecos(lr?lr.segs:[],F).forEach(([g1,g2])=>vigas.push(armarViga({y:R,g1,g2,cumbrera:true})));
+  }
+  // 2da pasada: con todas las vigas puestas
+  const e1=estado([...vigas.filter(v=>!v.cumbrera),...extras]);
+  let luzMax=0,volMax=0,sinApoyo=0,parMax=null;
+  e1.forEach(c=>c.forEach(s=>{if(s.ok){if(s.luz>luzMax){luzMax=s.luz;parMax=s.par}}else sinApoyo++;volMax=Math.max(volMax,s.vol)}));
+  const cabRojo=e1.map(c=>c.some(s=>!s.ok));
+  // Sugerencia: viga intermedia en el medio de la luz más larga, apoyada en paredes paralelas
+  let sug=null;
+  if(parMax&&luzMax>=C.luz2x6-EPS){
+    const y=r5((parMax[0]+parMax[1])/2);
+    if(!S.vigasExtra.some(e=>Math.abs(e-y)<0.05)){
+      const v=armarViga({y,g1:0,g2:F,extra:true});
+      sug={...v,luzNueva:Math.max(y-parMax[0],parMax[1]-y)};
+    }
+  }
+  return {cb,vigas,extras,luzMax,volMax,sinApoyo,cabRojo,lineas:ls,sug};
+}
+
+/* ===== Cálculo de materiales ===== */
+function itemsViga(v,nombre,desc){
+  const out=[];const porSec={};
+  v.tramos.forEach(t=>{(porSec[t.sec]=porSec[t.sec]||[]).push(t)});
+  Object.keys(porSec).forEach(sec=>{
+    const ts=porSec[sec];
+    const falta=ts.some(t=>!t.pieza);
+    const tramosTxt=ts.length>1||v.tramos.length>1?` · tramos de ${ts.map(t=>f(t.L)).join(" y ")} m entre apoyos`:"";
+    if(falta)out.push({n:`${nombre} ${pulg(sec)}`,d:`${desc}${tramosTxt} · algún tramo pasa los 6,12 m`,q:"Consultanos",alert:true});
+    else{const cu={};ts.forEach(t=>cu[t.pieza]=(cu[t.pieza]||0)+1);
+      out.push({n:`${nombre} ${pulg(sec)}`,d:desc+tramosTxt,q:`${ts.length} u.`,qs:`de ${ts.map(t=>f(t.pieza)).join(" + ")} m`,alert:!v.extra,
+        pz:Object.keys(cu).map(l=>({k:`viga:${sec}:${l}`,c:cu[l]}))})}
+  });
+  return out;
+}
+function calcular(){
+  const a=analizar();
+  const rec=a.luzMax>=C.luz2x6-EPS?"2x6":"2x5";
+  const sec=S.sec||rec;
+  const aguas=S.tipo,F=S.frente,R=S.largo,n=a.cb.n;
+  const items=[];
+  // Cabios
+  const pz=piezas(R,sec==="2x6"?LARGOS_2X6:LARGOS_2X5);
+  let mlCab=0;
+  if(pz){const cuenta={};pz.forEach(l=>cuenta[l]=(cuenta[l]||0)+n*aguas);
+    Object.keys(cuenta).map(Number).sort((x,y)=>y-x).forEach(l=>{mlCab+=l*cuenta[l];
+      items.push({n:`Cabio ${pulg(sec)}`,d:`Largo comercial ${f(l)} m`,q:`${cuenta[l]} u.`,pz:[{k:`cab:${sec}:${l}`,c:cuenta[l]}]})});
+    if(pz.length>1)items[items.length-1].d+=` · cada cabio va en ${pz.length} piezas (${pz.map(x=>f(x)).join(" + ")} m)`;
+  }else items.push({n:`Cabio ${pulg(sec)}`,d:`Cabio de ${f(R)} m: demasiado largo para calcularlo acá`,q:"Consultanos",alert:true});
+  // Vigas y columnas
+  a.vigas.forEach(v=>items.push(...itemsViga(v,v.cumbrera?"Viga cumbrera":"Viga",
+    v.cumbrera?`Bajo la cumbrera, ${f(v.L)} m sin pared`:`Hueco sin pared de ${f(v.L)} m, a ${f(dA(v.y))} m ${REF()}`)));
+  a.extras.forEach(v=>items.push(...itemsViga(v,"Viga intermedia",`A ${f(dA(v.y))} m ${REF()}, de ${f(v.L)} m`)));
+  const cols=[...a.vigas,...a.extras].reduce((s,v)=>s+v.cols,0);
+  if(cols)items.push({n:"Columnas",d:`${cols} punta${cols>1?"s":""} de viga sin pared donde apoyar`,q:"Consultanos",alert:true,consulta:true});
+  // Machimbre
+  const area=F*R*aguas;
+  const mach=area*(1+C.despMach/100);
+  items.push({n:"Machimbre",d:`${f(area)} m² de techo + ${f(C.despMach,0)}% de desperdicio`,q:`${f(Math.ceil(mach*10-EPS)/10,1)} m²`,pz:[{k:"mach",c:Math.ceil(mach*10-EPS)/10}]});
+  // Ruberoid
+  const rub=rollos(mach,C.rollosRub);
+  items.push({n:"Ruberoid",d:`Para ${f(mach,1)} m² (misma medida que el machimbre): ${txtRollos(rub)}`,q:`${rub.cnt} rollo${rub.cnt>1?"s":""}`,pz:rub.partes.map(p=>({k:`rub:${p.s}`,c:p.k}))});
+  // Bulines
+  items.push({n:"Bulines",d:"Mismos metros que los cabios",q:`${f(mlCab)} m`,pz:[{k:"bul",c:r2(mlCab)}]});
+  // Aislante
+  const ai=AISL[S.ais];
+  if(ai.plancha){const k=Math.ceil(area-EPS);items.push({n:ai.n,d:`Planchas de 1 x 1 m para ${f(area)} m²`,q:`${k} planchas`,pz:[{k:`ais:${S.ais}`,c:k}]})}
+  else if(ai.rollos){const need=area*(1+C.solapeAis/100);const r=rollos(need,ai.rollos);
+    items.push({n:ai.n,d:`${f(area)} m² + ${f(C.solapeAis,0)}% de solape = ${f(need,1)} m²: ${txtRollos(r)}`,q:`${r.cnt} rollo${r.cnt>1?"s":""}`,pz:r.partes.map(p=>({k:`ais:${S.ais}:${p.s}`,c:p.k}))})}
+  else{const k=Math.ceil(area/ai.util-EPS);items.push({n:ai.n,d:`Rollos de ${f(ai.trae)} m² que cubren ${f(ai.util,0)} m² cada uno, para ${f(area)} m²`,q:`${k} rollo${k>1?"s":""}`,pz:[{k:"ais:lana",c:k}]})}
+  // Clavaderas
+  const cl=clavaderas();
+  const filas=cl.filas*aguas;const pzC=piezas(F,LARGOS_2X6);
+  let dC=`${filas} filas de ${f(F)} m, cada ${f(cl.sep*100,0)} cm`;
+  if(pzC)dC+=` · ${filas*pzC.length} piezas (${pzC.map(x=>f(x)).join(" + ")} m por fila)`;
+  items.push({n:`Clavaderas ${pulg(S.clav)}`,d:dC,q:`${f(filas*F)} m`,pz:[{k:`clav:${S.clav}`,c:r2(filas*F)}]});
+  // Chapa
+  const nCh=Math.ceil(F/C.chapaUtil-EPS)*aguas;
+  items.push({n:"Chapa",d:`${nCh} chapas de ${f(R)} m de largo (${f(C.chapaTotal)} m de ancho, cubren ${f(C.chapaUtil,0)} m)`,q:`${nCh} u.`,qs:`${f(nCh*R)} m`,pz:[{k:`chapa:${Math.ceil(R*2-EPS)/2}`,c:nCh}]});
+  if(aguas===2)items.push({n:"Cumbrera de chapa",d:"A lo largo del frente",q:`${f(F)} m`});
+  return {a,rec,sec,area,items,pz,cl};
+}
+function clavaderas(){
+  const R=S.largo;
+  if(S.clavModo==="manual"){const filas=Math.max(2,Math.round(S.clavFilas)||2);return {filas,sep:R/(filas-1)}}
+  let g=Math.max(1,Math.floor(R/C.clavSep+EPS));
+  if(R-g*C.clavSep>=C.clavResto-EPS)g++;
+  return {filas:g+1,sep:R/g};
+}
+
+/* ===== Dibujo ===== */
+const svg=$("plan");
+let geo=null,drag=null,moved=false;
+function dibujar(r){
+  const W=S.frente,H=fondo(),a=r.a;
+  const s=Math.min(470/W,460/H,140);
+  const ml=22,mt=34,mr=118,mb=42;
+  const pw=W*s,ph=H*s,vw=pw+ml+mr,vh=ph+mt+mb;
+  geo={s,ml,mt,ph,H,W};
+  const X=x=>ml+x*s, Y=y=>mt+(H-y)*s;
+  const T=Math.max(6,0.15*s);
+  let g=`<rect x="0" y="0" width="${vw}" height="${vh}" fill="transparent"/>`;
+  g+=`<rect x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="var(--surface)" stroke="var(--muted)" stroke-width="1" stroke-dasharray="4 3"/>`;
+  a.cb.xs.forEach((x,i)=>{const red=a.cabRojo[i];
+    g+=`<line x1="${X(x)}" y1="${mt}" x2="${X(x)}" y2="${mt+ph}" stroke="${red?"var(--warn)":"var(--pine)"}" stroke-width="${r.sec==="2x6"?3:2.2}" opacity="${red?1:.75}"/>`});
+  // paredes paralelas (debajo de las otras)
+  S.paredes.forEach((p,i)=>{if(!esV(p))return;
+    const y1=Math.min(p.y1,p.y2),y2=Math.max(p.y1,p.y2),x=X(p.x),h=(y2-y1)*s;
+    const xr=Math.min(Math.max(x-T/2,ml-T/2),ml+pw-T/2);
+    g+=`<rect x="${xr}" y="${Y(y2)}" width="${T}" height="${Math.max(h,2)}" fill="var(--ink)" opacity=".7" rx="1"/>`;
+    if(h>40)g+=`<text x="${xr+T+4}" y="${Y(y2)+14}" font-size="11" font-weight="700" fill="var(--muted)" font-family="var(--f-body)">P${i+1}</text>`;
+    g+=`<rect class="hv" data-i="${i}" data-m="x" x="${x-14}" y="${Y(y2)+10}" width="28" height="${Math.max(h-20,4)}" fill="transparent"/>`;
+    [["y1",y1],["y2",y2]].forEach(([m,y])=>{
+      g+=`<circle cx="${x}" cy="${Y(y)}" r="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>`;
+      g+=`<circle class="hy" data-i="${i}" data-m="${p.y1<=p.y2?m:(m==="y1"?"y2":"y1")}" cx="${x}" cy="${Y(y)}" r="14" fill="transparent"/>`});
+  });
+  // vigas
+  const dibViga=(v,col,fill,dash,etq)=>{const y=Y(v.y),t=Math.max(8,0.2*s);
+    g+=`<rect x="${X(v.g1)}" y="${y-t/2}" width="${(v.g2-v.g1)*s}" height="${t}" fill="${fill}" stroke="${col}" stroke-width="2" stroke-dasharray="${dash}"/>`;
+    v.tramos.forEach(tr=>{const w=(tr.b-tr.a)*s;if(w<70&&v.tramos.length>1)return;
+      g+=`<text x="${X((tr.a+tr.b)/2)}" y="${y+t/2+14}" text-anchor="middle" font-size="11.5" font-weight="700" fill="${col}" font-family="var(--f-body)">${etq} ${tr.sec} · ${f(tr.L)}</text>`});
+    v.colsX.forEach(x=>{g+=`<rect x="${X(x)-6}" y="${y-6}" width="12" height="12" fill="var(--warn)"/>`});
+  };
+  a.vigas.forEach(v=>dibViga(v,"var(--warn)","var(--warn-soft)","6 4","VIGA"));
+  a.extras.forEach(v=>dibViga(v,"var(--plan)","var(--surface)","0","VIGA"));
+  if(a.sug&&a.sug.apoyos)dibViga(a.sug,"var(--pine)","transparent","3 4","¿VIGA?");
+  if(S.tipo===2){const y=Y(S.largo);
+    g+=`<line x1="${ml-6}" y1="${y}" x2="${ml+pw+6}" y2="${y}" stroke="var(--plan)" stroke-width="2" stroke-dasharray="2 4"/>`;
+    g+=`<text x="${ml+4}" y="${y-8}" font-size="11.5" font-weight="700" fill="var(--plan)" font-family="var(--f-body)">CUMBRERA</text>`}
+  // paredes que cruzan los cabios
+  S.paredes.forEach((p,i)=>{if(esV(p))return;const x1=Math.min(p.x1,p.x2),x2=Math.max(p.x1,p.x2),y=Y(p.y),w=(x2-x1)*s;
+    g+=`<rect x="${X(x1)}" y="${y-T/2}" width="${Math.max(w,2)}" height="${T}" fill="var(--ink)" rx="1"/>`;
+    const arriba=y-mt<22;
+    if(w>58)g+=`<text x="${X(x1)+(arriba?30:6)}" y="${arriba?y+T/2+14:y-T/2-5}" font-size="11.5" font-weight="700" fill="var(--ink)" font-family="var(--f-body)">PARED ${i+1}</text>`;
+    g+=`<rect class="hit" data-i="${i}" data-m="y" x="${X(x1)+10}" y="${y-14}" width="${Math.max(w-20,4)}" height="28" fill="transparent"/>`;
+    [["x1",x1],["x2",x2]].forEach(([m,x])=>{
+      g+=`<circle cx="${X(x)}" cy="${y}" r="6" fill="var(--surface)" stroke="var(--ink)" stroke-width="2"/>`;
+      g+=`<circle class="hx" data-i="${i}" data-m="${p.x1<=p.x2?m:(m==="x1"?"x2":"x1")}" cx="${X(x)}" cy="${y}" r="14" fill="transparent"/>`});
+  });
+  // cotas entre líneas de apoyo
+  const ys=[...new Set([...a.lineas.map(l=>r2(l.y)),...S.vigasExtra.map(r2),...(S.tipo===2?[r2(S.largo)]:[])])].sort((p,q)=>p-q);
+  const cx=ml+pw+14;
+  const cota=(y1m,y2m,txt,col,bold)=>{const y1=Y(y1m),y2=Y(y2m),ym=(y1+y2)/2;
+    return `<line x1="${cx}" y1="${y1}" x2="${cx}" y2="${y2}" stroke="${col}" stroke-width="1.5"/>`+
+      `<line x1="${cx-4}" y1="${y1}" x2="${cx+4}" y2="${y1}" stroke="${col}" stroke-width="1.5"/>`+
+      `<line x1="${cx-4}" y1="${y2}" x2="${cx+4}" y2="${y2}" stroke="${col}" stroke-width="1.5"/>`+
+      `<text x="${cx+9}" y="${ym+4}" font-size="12.5" font-weight="${bold?700:500}" fill="${col}" font-family="var(--f-mono)">${txt}</text>`};
+  for(let i=1;i<ys.length;i++){const d=ys[i]-ys[i-1];if((Y(ys[i-1])-Y(ys[i]))<14)continue;const big=d>=C.luz2x6-EPS;
+    g+=cota(ys[i-1],ys[i],`luz ${f(d)}`,big?"var(--warn)":"var(--plan)",big)}
+  if(ys.length){if(Y(0)-Y(ys[0])>14)g+=cota(0,ys[0],`alero ${f(ys[0])}`,"var(--muted)",false);
+    const top=ys[ys.length-1];if(Y(top)-Y(H)>14)g+=cota(top,H,`alero ${f(H-top)}`,"var(--muted)",false)}
+  g+=`<text x="${ml+pw/2}" y="${mt+ph+26}" text-anchor="middle" font-size="12.5" fill="var(--muted)" font-family="var(--f-mono)">frente ${f(W)} m · ${a.cb.n} cabios${S.tipo===2?" por agua":""}</text>`;
+  g+=`<text x="${ml}" y="${mt-12}" font-size="11.5" fill="var(--muted)" font-family="var(--f-body)">↑ los cabios corren en este sentido</text>`;
+  if(S.tipo===1)g+=`<text x="${ml+pw}" y="${mt-12}" text-anchor="end" font-size="11.5" font-weight="700" fill="var(--plan)" font-family="var(--f-body)">CUMBRERA · las medidas se toman desde acá</text>`;
+  svg.setAttribute("viewBox",`0 0 ${vw} ${vh}`);
+  svg.innerHTML=g;
+}
+function aMetros(ev){
+  const pt=svg.createSVGPoint();pt.x=ev.clientX;pt.y=ev.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:Math.min(geo.W,Math.max(0,r5((p.x-geo.ml)/geo.s))),y:Math.min(geo.H,Math.max(0,r5(geo.H-(p.y-geo.mt)/geo.s)))};
+}
+const extensionParalela=()=>{const ys=lineas().map(l=>l.y);
+  return ys.length>=2?[r2(Math.min(...ys)),r2(Math.max(...ys))]:[0,r2(fondo())]};
+svg.addEventListener("pointerdown",ev=>{
+  const h=ev.target.closest(".hit,.hx,.hv,.hy");if(!h)return;
+  drag={i:+h.dataset.i,m:h.dataset.m};moved=false;ev.preventDefault();
+});
+window.addEventListener("pointermove",ev=>{if(!drag)return;moved=true;const m=aMetros(ev);const p=S.paredes[drag.i];
+  const usaX=esV(p)?drag.m==="x":drag.m!=="y";
+  p[drag.m]=usaX?m.x:m.y;render(false)});
+window.addEventListener("pointerup",()=>{if(drag){const p=S.paredes[drag.i];
+  if(esV(p)){if(Math.abs(p.y2-p.y1)<0.05)S.paredes.splice(drag.i,1);else if(p.y1>p.y2)[p.y1,p.y2]=[p.y2,p.y1]}
+  else{if(Math.abs(p.x2-p.x1)<0.05)S.paredes.splice(drag.i,1);else if(p.x1>p.x2)[p.x1,p.x2]=[p.x2,p.x1]}
+  drag=null;render(true)}});
+svg.addEventListener("click",ev=>{
+  if(ev.target.closest(".hit,.hx,.hv,.hy")||moved){moved=false;return}
+  const m=aMetros(ev);
+  if(S.modo==="v"){const [y1,y2]=extensionParalela();S.paredes.push({dir:"v",x:m.x,y1,y2})}
+  else S.paredes.push({y:m.y,x1:0,x2:S.frente});
+  render(true);
+});
+
+/* ===== Lista de paredes y vigas ===== */
+const campo=(i,k,lbl,val,extra="")=>`<label class="mini"><span class="l">${lbl}</span><span class="unit"><input type="text" inputmode="decimal" id="p${i}_${k}" data-i="${i}" data-k="${k}" value="${f(val)}"${extra}><span>m</span></span></label>`;
+function listaParedes(){
+  let h="";
+  S.paredes.forEach((p,i)=>{
+    if(esV(p))h+=`<div class="wall"><span class="name">Pared ${i+1}<span class="tag">paralela a los cabios</span></span>
+      ${campo(i,"x","Desde la izquierda",p.x)}${campo(i,"t1","Empieza en",dA(p.y2))}${campo(i,"t2","Termina en",dA(p.y1))}
+      <span class="acts"><button type="button" class="btn ghost" data-del="${i}">Quitar</button></span></div>`;
+    else h+=`<div class="wall"><span class="name">Pared ${i+1}<span class="tag">cruza los cabios</span></span>
+      ${campo(i,"y",LBL(),dA(p.y))}${campo(i,"x1","Empieza en",p.x1)}${campo(i,"x2","Termina en",p.x2)}
+      <span class="acts"><button type="button" class="btn small" data-hueco="${i}">Dejar hueco</button><button type="button" class="btn ghost" data-del="${i}">Quitar</button></span></div>`});
+  S.vigasExtra.forEach((y,j)=>{h+=`<div class="wall vrow viga"><span class="name">Viga ${j+1}<span class="tag">intermedia</span></span>
+    <label class="mini"><span class="l">${LBL()}</span><span class="unit"><input type="text" inputmode="decimal" id="vx_${j}" data-viga="${j}" value="${f(dA(y))}"><span>m</span></span></label>
+    <span class="acts"><button type="button" class="btn ghost" data-delviga="${j}">Quitar</button></span></div>`});
+  if(S.tipo===2)h+=`<div class="wall fixedrow"><span class="name">Cumbrera</span><span class="fixed">a ${f(S.largo)} m · si no hay pared debajo, va viga</span></div>`;
+  $("walls").innerHTML=h;
+}
+$("walls").addEventListener("change",ev=>{const t=ev.target;
+  if(t.dataset.viga!==undefined){const v=num(t.value);if(isFinite(v))S.vigasExtra[+t.dataset.viga]=r2(fondo()-Math.min(fondo(),Math.max(0,v)));render(true);return}
+  if(t.dataset.i===undefined)return;
+  const v=num(t.value),p=S.paredes[+t.dataset.i],k=t.dataset.k;
+  if(isFinite(v)){const max=(k==="x"||k==="x1"||k==="x2")?S.frente:fondo(),val=Math.min(max,Math.max(0,r2(v)));
+    if(k==="y")p.y=r2(fondo()-val);else if(k==="t1")p.y2=r2(fondo()-val);else if(k==="t2")p.y1=r2(fondo()-val);else p[k]=val;
+    if(p.x1>p.x2)[p.x1,p.x2]=[p.x2,p.x1];if(p.y1>p.y2)[p.y1,p.y2]=[p.y2,p.y1]}
+  render(true)});
+$("walls").addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;
+  if(b.dataset.del!==undefined){S.paredes.splice(+b.dataset.del,1);render(true)}
+  if(b.dataset.delviga!==undefined){S.vigasExtra.splice(+b.dataset.delviga,1);render(true)}
+  if(b.dataset.hueco!==undefined){const i=+b.dataset.hueco,p=S.paredes[i],L=p.x2-p.x1;if(L<0.6)return;
+    const w=Math.min(1,r5(L/3)),mid=r5((p.x1+p.x2)/2);
+    S.paredes.splice(i,1,{y:p.y,x1:p.x1,x2:r2(mid-w/2)},{y:p.y,x1:r2(mid+w/2),x2:p.x2});render(true)}});
+$("addWall").addEventListener("click",()=>{
+  const ys=[0,...lineas().map(l=>l.y),fondo()].sort((a,b)=>a-b);let best=[0,fondo()];
+  for(let i=1;i<ys.length;i++)if(ys[i]-ys[i-1]>best[1]-best[0])best=[ys[i-1],ys[i]];
+  S.paredes.push({y:r5((best[0]+best[1])/2),x1:0,x2:S.frente});render(true)});
+$("addWallV").addEventListener("click",()=>{
+  const xs=[...new Set([0,...vW().map(p=>p.x),S.frente])].sort((a,b)=>a-b);
+  let x;
+  if(!vW().some(p=>p.x<0.05))x=0;else if(!vW().some(p=>p.x>S.frente-0.05))x=S.frente;
+  else{let best=[0,S.frente],bw=-1;for(let i=1;i<xs.length;i++)if(xs[i]-xs[i-1]>bw){bw=xs[i]-xs[i-1];best=[xs[i-1],xs[i]]}x=r5((best[0]+best[1])/2)}
+  const [y1,y2]=extensionParalela();S.paredes.push({dir:"v",x,y1,y2});render(true)});
+$("apoyoNote").addEventListener("click",ev=>{const b=ev.target.closest("[data-addviga]");if(!b)return;
+  S.vigasExtra.push(num(b.dataset.addviga));S.vigasExtra.sort((a,b)=>a-b);render(true)});
+
+/* ===== Render ===== */
+function setSeg(id,v){$(id).querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v==String(v))))}
+const txtTramos=v=>v.tramos.map(t=>`${f(t.L)} m (${pulg(t.sec)})`).join(" + ");
+let ultimo=null;
+function render(conLista){
+  const r=calcular(),a=r.a;ultimo=r;
+  setSeg("tipo",S.tipo);setSeg("seccion",r.sec);setSeg("clav",S.clav);setSeg("modo",S.modo);
+  $("seccion").querySelectorAll("button").forEach(b=>{b.innerHTML=pulg(b.dataset.v)+(b.dataset.v===r.rec?' <span class="badge">Recomendado</span>':"")});
+  $("cantField").hidden=S.sep!=="manual";$("clavField").hidden=S.clavModo!=="manual";
+  $("largoHint").textContent=S.tipo===2?"De cada agua: de la cumbrera a la punta del alero, con la caída incluida.":"Medido sobre el cabio, con la caída y el alero incluidos.";
+  // separación cabios
+  $("sepNote").innerHTML=S.sep==="manual"
+    ?(a.cb.sep>C.sepMax+EPS?`<div class="note warn">Con ${a.cb.n} cabios quedan cada <b>${f(a.cb.sep*100,0)} cm</b>. Recomendamos no pasar de 60 cm: necesitás al menos <b>${Math.ceil(S.frente/C.sepMax-EPS)+1} cabios</b>.</div>`
+      :`<div class="note">Con ${a.cb.n} cabios quedan cada <b>${f(a.cb.sep*100,0)} cm</b>.</div>`)
+    :`<div class="note">Van <b>${a.cb.n} cabios${S.tipo===2?" por agua":""}</b>, separados ${f(a.cb.sep*100,0)} cm.</div>`;
+  // apoyos y vigas
+  let ap="";
+  const colsTxt=v=>v.cols?` Para ${v.cols>1?"las columnas":"la columna"} de ${v.cols>1?"las puntas":"la punta"} sin pared, consultanos.`:"";
+  const apoyaTxt=v=>v.apoyos?` Apoya en ${v.apoyos} pared${v.apoyos>1?"es":""} paralela${v.apoyos>1?"s":""}: tramos de ${txtTramos(v)}.`:` Va de ${pulg(v.tramos[0].sec)}.`;
+  a.vigas.forEach(v=>{
+    const largo=v.tramos.some(t=>!t.pieza)?" Algún tramo pasa los 6,12 m: consultanos.":"";
+    if(v.cumbrera)ap+=`<div class="note warn">Bajo la cumbrera no marcaste pared${v.L<S.frente-0.05?" en un tramo":""} de <b>${f(v.L)} m</b>: va una <b>viga cumbrera</b>.${apoyaTxt(v)}${largo}${colsTxt(v)}</div>`;
+    else ap+=`<div class="note warn">A ${f(dA(v.y))} m ${REF()} hay un hueco de <b>${f(v.L)} m sin pared</b> donde los cabios quedan sin apoyo. Hace falta una <b>viga</b>.${apoyaTxt(v)}${largo}${colsTxt(v)}</div>`;
+  });
+  a.extras.forEach((v,j)=>{const largo=v.tramos.some(t=>!t.pieza)?" Algún tramo pasa los 6,12 m: consultanos.":"";
+    ap+=`<div class="note">Viga intermedia ${j+1} a <b>${f(dA(v.y))} m ${REF()}</b>.${v.apoyos?apoyaTxt(v):` No pasa por ninguna pared paralela: va de ${pulg(v.tramos[0].sec)}.`}${largo}${colsTxt(v)}</div>`});
+  if(a.sug){
+    if(a.sug.apoyos)ap+=`<div class="note sug">La luz más larga es de <b>${f(a.luzMax)} m</b>. Podés poner una <b>viga intermedia a ${f(dA(a.sug.y))} m ${REF()}</b> apoyada en ${a.sug.apoyos} pared${a.sug.apoyos>1?"es":""} paralela${a.sug.apoyos>1?"s":""}: tramos de ${txtTramos(a.sug)}. Así los cabios quedan con luz de ${f(a.sug.luzNueva)} m.${colsTxt(a.sug)}
+      <div class="row-actions" style="margin-top:8px"><button type="button" class="btn small" data-addviga="${a.sug.y}">Agregar esta viga</button></div></div>`;
+    else ap+=`<div class="note sug">La luz más larga es de <b>${f(a.luzMax)} m</b>. Si hay paredes en el mismo sentido que los cabios, marcalas: vemos si se puede poner una viga intermedia apoyada en ellas.</div>`;
+  }
+  if(a.sinApoyo)ap+=`<div class="note warn">Hay cabios (en rojo) que apoyan en una sola pared. Marcá la pared que falta o consultanos.</div>`;
+  if(a.volMax>1+EPS)ap+=`<div class="note warn">Hay un alero de <b>${f(a.volMax)} m</b> sin apoyo. Más de 1 m de voladizo conviene consultarlo.</div>`;
+  if(!ap&&S.paredes.length)ap=`<div class="note">Todos los cabios apoyan en paredes.</div>`;
+  $("apoyoNote").innerHTML=ap;
+  // sección
+  let nt="";
+  if(a.luzMax>0){
+    if(r.rec==="2x6")nt=r.sec==="2x6"
+      ?`<div class="note sug">La luz más larga entre apoyos es de <b>${f(a.luzMax)} m</b>. Elegiste 2" x 6", que es lo que te recomendamos.</div>`
+      :`<div class="note sug">La luz más larga entre apoyos es de <b>${f(a.luzMax)} m</b>. Desde 3,96 m te recomendamos <b>cabios de 2" x 6"</b>. Podés seguir con 2" x 5" si preferís, o agregar una pared o viga intermedia.</div>`;
+    else nt=`<div class="note">La luz más larga entre apoyos es de <b>${f(a.luzMax)} m</b>. Con 2" x 5" alcanza.</div>`;
+  }
+  if(r.pz&&r.pz.length>1)nt+=`<div class="note">El cabio mide más que la pieza más larga, así que va empalmado (${r.pz.map(x=>f(x)).join(" + ")} m). El empalme tiene que caer sobre una pared o viga.</div>`;
+  $("secNote").innerHTML=nt;
+  // clavaderas
+  $("clavNote").innerHTML=S.clavModo==="manual"&&r.cl.sep>C.clavAviso+EPS
+    ?`<div class="note sug">Con ${r.cl.filas} filas quedan cada <b>${f(r.cl.sep*100,0)} cm</b>, más de lo recomendado (hasta 90 cm).</div>`
+    :`<div class="note">Van <b>${r.cl.filas} filas de clavaderas${S.tipo===2?" por agua":""}</b>, cada ${f(r.cl.sep*100,0)} cm.</div>`;
+  // resumen
+  $("stats").innerHTML=`<div class="stat"><div class="k">Superficie</div><div class="v">${f(r.area)} m²</div></div>
+    <div class="stat"><div class="k">Luz máx.</div><div class="v">${f(a.luzMax)} m</div></div>
+    <div class="stat"><div class="k">Cabios</div><div class="v">${a.cb.n*S.tipo} u.</div></div>`;
+  const pr=precios(r.items);
+  $("list").innerHTML=r.items.map((it,i)=>`<div class="item${it.alert?" alert":""}"><div class="n">${it.n}</div>
+    <div class="q">${it.q}${it.qs?`<small>${it.qs}</small>`:""}</div><div class="d">${it.d}</div>${pr.txt[i]}</div>`).join("");
+  $("total").innerHTML=pr.html;
+  dibujar(r);
+  if(conLista!==false)listaParedes();
+  else S.paredes.forEach((p,i)=>{const vals=esV(p)?{x:p.x,t1:dA(p.y2),t2:dA(p.y1)}:{y:dA(p.y),x1:p.x1,x2:p.x2};
+    Object.keys(vals).forEach(k=>{const el=$(`p${i}_${k}`);if(el&&el!==document.activeElement)el.value=f(vals[k])})});
+}
+
+/* ===== Entradas ===== */
+function bindNum(id,set){$(id).addEventListener("input",ev=>{const v=num(ev.target.value);if(isFinite(v)&&v>0){set(v);render(true)}})}
+$("frente").value=f(S.frente);$("largo").value=f(S.largo);$("cant").value=S.cant;$("sep").value=S.sep;
+$("ais").value=S.ais;$("clavModo").value=S.clavModo;$("clavFilas").value=S.clavFilas;
+bindNum("frente",v=>{const old=S.frente;S.frente=Math.min(v,60);
+  S.paredes.forEach(p=>{if(esV(p)){if(Math.abs(p.x-old)<0.03)p.x=S.frente;p.x=Math.min(p.x,S.frente)}
+    else{if(Math.abs(p.x2-old)<0.03)p.x2=S.frente;p.x1=Math.min(p.x1,S.frente);p.x2=Math.min(p.x2,S.frente)}});
+  S.paredes=S.paredes.filter(p=>esV(p)||p.x2-p.x1>=0.05)});
+bindNum("largo",v=>{const old=fondo();S.largo=Math.min(v,18);const nw=fondo();
+  const mueve=y=>Math.min(nw,Math.max(0,r2(y>old/2?y+(nw-old):y)));
+  S.paredes.forEach(p=>{if(esV(p)){p.y1=mueve(p.y1);p.y2=mueve(p.y2)}else p.y=mueve(p.y)});
+  S.vigasExtra=S.vigasExtra.map(mueve)});
+bindNum("cant",v=>S.cant=Math.min(Math.round(v),400));
+bindNum("clavFilas",v=>S.clavFilas=Math.min(Math.round(v),200));
+$("sep").addEventListener("change",ev=>{if(ev.target.value==="manual"){S.cant=cabios().n;$("cant").value=S.cant}S.sep=ev.target.value;render(true)});
+$("clavModo").addEventListener("change",ev=>{if(ev.target.value==="manual"){S.clavFilas=clavaderas().filas;$("clavFilas").value=S.clavFilas}S.clavModo=ev.target.value;render(true)});
+$("ais").addEventListener("change",ev=>{S.ais=ev.target.value;render(true)});
+["madera","mach","chapa"].forEach(id=>{$(id).value=S[id];$(id).addEventListener("change",ev=>{S[id]=ev.target.value;render(false)})});
+$("tipo").addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;const t=+b.dataset.v;if(t===S.tipo)return;
+  S.tipo=t;const T=fondo(),y2=t===1?r2(T):r2(T-0.40);
+  S.paredes=t===1?[{y:y2,x1:0,x2:S.frente},{y:0.40,x1:0,x2:S.frente},{dir:"v",x:0,y1:0.40,y2},{dir:"v",x:S.frente,y1:0.40,y2}]
+    :[{y:0.40,x1:0,x2:S.frente},{y:y2,x1:0,x2:S.frente},{dir:"v",x:0,y1:0.40,y2},{dir:"v",x:S.frente,y1:0.40,y2}];
+  S.vigasExtra=[];render(true)});
+$("modo").addEventListener("click",ev=>{const b=ev.target.closest("button");if(b){S.modo=b.dataset.v;render(false)}});
+$("seccion").addEventListener("click",ev=>{const b=ev.target.closest("button");if(b){S.sec=b.dataset.v;render(true)}});
+$("clav").addEventListener("click",ev=>{const b=ev.target.closest("button");if(b){S.clav=b.dataset.v;render(true)}});
+
+/* ===== Copiar ===== */
+$("copy").addEventListener("click",()=>{
+  const r=ultimo,a=r.a;
+  const txt=[`Techo ${S.tipo===2?"a dos aguas":"a un agua"}: frente ${f(S.frente)} m, cabio ${f(S.largo)} m`,
+    `Luz máxima entre apoyos: ${f(a.luzMax)} m · ${a.cb.n*S.tipo} cabios cada ${f(a.cb.sep*100,0)} cm`,
+    `Paredes que cruzan los cabios: `+(hW().map(p=>`P${S.paredes.indexOf(p)+1} a ${f(dA(p.y))} m ${REF()} (de ${f(p.x1)} a ${f(p.x2)} m)`).join("; ")||"ninguna"),
+    `Paredes paralelas: `+(vW().map(p=>`P${S.paredes.indexOf(p)+1} a ${f(p.x)} m de la izquierda (de ${f(dA(p.y2))} a ${f(dA(p.y1))} m ${REF()})`).join("; ")||"ninguna"),
+    ...(S.vigasExtra.length?[`Vigas intermedias: `+S.vigasExtra.map(y=>`a ${f(dA(y))} m ${REF()}`).join("; ")]:[]),"",
+    ...r.items.map((it,i)=>`• ${it.n}: ${it.q}${it.qs?" ("+it.qs+")":""} — ${it.d}${precios(r.items).linea[i]}`),"",precios(r.items).totalTxt].join("\n");
+  const ok=()=>{$("toast").textContent="Lista copiada";setTimeout(()=>$("toast").textContent="",2500)};
+  try{navigator.clipboard.writeText(txt).then(ok,()=>{$("toast").textContent="No se pudo copiar"})}catch(e){$("toast").textContent="No se pudo copiar"}
+});
+
+/* ===== Precios desde el catálogo de la página ===== */
+let CAT=null,catError=false;
+const pesos=n=>"$"+Math.round(n).toLocaleString("es-AR");
+const AIS_COD={tg2:"T2",tg4:"T4","esp5:10":"ESP510","esp5:20":"ESP520","esp10:10":"ESP1010","esp10:20":"ESP1020","burb:15":"BUR15","burb:30":"BUR30",lana:"LANA50"};
+const nroCod=l=>String(+(+l).toFixed(2));
+/* De la pieza calculada al código del producto */
+function codigoDe(k){
+  const [t,a,b]=k.split(":");
+  if(t==="cab"||t==="viga")return S.madera+a.toUpperCase()+"X"+nroCod(b);
+  if(t==="clav")return S.madera+a.toUpperCase();
+  if(t==="bul")return "BUL";
+  if(t==="mach")return S.mach;
+  if(t==="rub")return "R"+nroCod(a);
+  if(t==="ais")return AIS_COD[b?a+":"+nroCod(b):a];
+  if(t==="chapa")return S.chapa+nroCod(a);
+  return null;
+}
+/* Líneas con precio de un ítem de la lista, y si alguna falta */
+function lineasPrecio(it){
+  if(!it.pz||it.consulta)return {ls:[],falta:true};
+  let falta=false;const ls=it.pz.map(p=>{const cod=codigoDe(p.k),r=CAT&&cod?CAT[cod]:null;
+    if(!r||r.precio==null)falta=true;
+    return {codigo:r?r.codigo:cod,nombre:r?r.nombre:it.n,precio:r?r.precio:null,unidad:r?r.unidad:null,cant:p.c}});
+  return {ls,falta};
+}
+function precios(items){
+  const txt=[],linea=[];let total=0,nc=0;
+  items.forEach(it=>{
+    if(!CAT){txt.push(`<div class="p cons">${catError?"Precio no disponible":"Cargando precio…"}</div>`);linea.push("");return}
+    const {ls,falta}=lineasPrecio(it);
+    if(falta){nc++;txt.push(`<div class="p cons">Consultar precio</div>`);linea.push(" — precio a consultar");return}
+    const sub=ls.reduce((s,x)=>s+x.precio*x.cant,0);total+=sub;
+    txt.push(`<div class="p">${pesos(sub)}</div>`);linea.push(" — "+pesos(sub));
+  });
+  let html;
+  if(CAT)html=`<span>Total estimado<small>${nc?`Sin contar ${nc} ${nc>1?"ítems":"ítem"} a consultar`:"Todos los materiales de la lista"}</small></span><b>${pesos(total)}</b>`;
+  else if(catError)html=`<span>No pudimos cargar los precios.<small>Igual podés agregar todo al pedido y te pasamos el precio.</small></span>`;
+  else html=`<span>Cargando precios…</span>`;
+  const totalTxt=CAT?`Total estimado: ${pesos(total)}${nc?` (sin contar ${nc} a consultar)`:""}`:"";
+  return {txt,linea,html,totalTxt};
+}
+function cargarCatalogo(){
+  const CF=window.CONFIG,KEY="pachalito-catalogo-v3";
+  try{const c=JSON.parse(sessionStorage.getItem(KEY));if(c&&Date.now()-c.t<5*60000)return Promise.resolve(c.d)}catch(e){}
+  let todo=[];
+  const pag=desde=>fetch(CF.supabaseUrl+"/rest/v1/catalogo?select=codigo,nombre,unidad,precio&order=codigo.asc&limit=1000&offset="+desde,{headers:{apikey:CF.supabaseKey}})
+    .then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).then(d=>{todo=todo.concat(d);return d.length===0?todo:pag(desde+d.length)});
+  return pag(0);
+}
+/* Deja en las listas solo lo que está visible en el catálogo (lo oculto desde Administración no aparece) */
+function filtrarOpciones(){
+  const cods=Object.keys(CAT);
+  const hay={
+    chapa:v=>cods.some(c=>c.startsWith(v)&&/^\d/.test(c.slice(v.length))),
+    mach:v=>!!CAT[v]||cods.some(c=>c.startsWith(v+"X")),
+    madera:v=>["2X5X","2X6X","3X6X","3X8X"].some(m=>cods.some(c=>c.startsWith(v+m)))
+  };
+  Object.keys(hay).forEach(id=>{const sel=$(id);
+    [...sel.options].forEach(o=>{if(!hay[id](o.value))o.remove()});
+    if(!sel.options.length)return;
+    if(![...sel.options].some(o=>o.value===S[id])){S[id]=sel.options[0].value}
+    sel.value=S[id]});
+}
+cargarCatalogo().then(d=>{CAT={};d.forEach(r=>CAT[r.codigo]=r);filtrarOpciones();render(false)},()=>{catError=true;render(false)});
+
+/* ===== Pasar la lista al pedido de la página ===== */
+$("alPedido").addEventListener("click",()=>{
+  const P=window.PACHALITO;if(!P)return;
+  const r=calcular(),pedido=P.leerPedido();
+  const sumar=x=>{const e=pedido.find(p=>p.codigo===x.codigo);if(e)e.cant=r2(e.cant+x.cant);else pedido.push(x)};
+  r.items.forEach(it=>{
+    const {ls}=lineasPrecio(it);
+    if(ls.length&&ls.every(x=>CAT&&CAT[x.codigo]))ls.forEach(x=>sumar({codigo:x.codigo,nombre:x.nombre,precio:x.precio,unidad:x.unidad,cant:x.cant}));
+    else sumar({codigo:"TECHO "+it.n,nombre:`${it.n} (${it.q}${it.qs?" · "+it.qs:""}) para el techo`,precio:null,unidad:null,cant:1});
+  });
+  P.guardarPedido(pedido);
+  location.href="productos.html#pedido";
+});
+
+render(true);
+</script>
+</body>
+</html>

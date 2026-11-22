@@ -1,0 +1,22 @@
+FOTOS DEL SITIO (opcionales)
+
+En esta carpeta van las fotos de las páginas. Si una foto no está, la página se ve igual, sin el espacio vacío.
+Usá fotos .jpg livianas (ancho de 1200 px como máximo) para que la página cargue rápido.
+
+portada.jpg              Foto grande del inicio (el depósito, la madera apilada, el frente del local)
+
+Fotos de las categorías del inicio:
+cat-maderas.jpg
+cat-machimbres.jpg
+cat-molduras.jpg
+cat-placas-y-tableros.jpg
+cat-chapas-y-perfiles.jpg
+cat-decks-y-revestimientos.jpg
+cat-aislantes.jpg
+cat-protectores-y-barnices.jpg
+cat-clavos-y-fijaciones.jpg
+cat-herrajes-y-soportes.jpg
+cat-muebles.jpg
+
+Las fotos de cada producto NO van acá: se suben a Supabase (Storage, carpeta "productos")
+con los nombres de la planilla 3_fotos_a_subir.xlsx.

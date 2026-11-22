@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maderas Pachalito · Maderas y materiales en Hurlingham</title>
+<meta name="description" content="Maderas, machimbres, placas, chapas y materiales para la construcción en Hurlingham. Pedí por WhatsApp.">
+<meta name="theme-color" content="#D2000A">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap">
+<link rel="stylesheet" href="estilos.css?v=20261115b">
+<script src="config.js?v=20261115b"></script>
+<script src="comun.js?v=20261115b" defer></script>
+</head>
+<body>
+<header class="encabezado">
+  <div class="contenedor">
+    <a class="marca" href="index.html" aria-label="Maderas Pachalito, inicio">
+      <img src="logo.svg" alt="" width="88" height="48">
+      <span class="marca-txt">Maderas · Melaminas<br>Fenólicos · Chapas<br>Molduras</span>
+    </a>
+    <nav class="nav-pc" aria-label="Principal">
+      <a href="index.html" aria-current="page">Inicio</a>
+      <a href="productos.html">Productos</a>
+      <a href="servicios.html">Servicios</a>
+      <a href="calculadora.html">Calculá tu techo</a>
+      <a href="contacto.html">Contacto</a>
+    </nav>
+    <div class="acciones">
+      <a class="btn-redondo rojo" data-whatsapp href="#" aria-label="Escribinos por WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      </a>
+      <details class="menu-movil">
+        <summary class="btn-redondo" aria-label="Abrir menú">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </summary>
+        <nav aria-label="Menú">
+          <a href="index.html" aria-current="page">Inicio</a>
+          <a href="productos.html">Productos y precios</a>
+          <a href="productos.html#pedido">Mi pedido (<span data-globo>0</span>)</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="calculadora.html">Calculá tu techo</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="portada">
+    <div class="contenedor">
+      <img class="portada-foto" src="img/portada.jpg" alt="El depósito de Maderas Pachalito" data-opcional onerror="this.remove()">
+      <div class="texto" style="display:flex;flex-direction:column;gap:16px">
+        <h1>Donde empiezan los grandes proyectos</h1>
+        <p>Armá tu pedido y mandalo por WhatsApp.</p>
+        <form class="buscador" action="productos.html" role="search" onsubmit="event.preventDefault();location.href='productos.html#q='+encodeURIComponent(this.q.value)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5E5B55" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <label for="q" class="oculto">Buscar producto o código</label>
+          <input id="q" name="q" type="search" placeholder="Buscá: cabio 2x4, machimbre, E2X4…" autocomplete="off">
+        </form>
+        <div class="botones">
+          <a class="btn btn-principal" href="productos.html">Ver productos y precios</a>
+          <a class="btn btn-secundario" data-whatsapp href="#">Escribinos por WhatsApp</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="destacado-techo" aria-label="Calculadora de techos">
+    <div class="contenedor">
+      <div class="caja-techo">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
+        <div><b>¿Vas a hacer un techo?</b><span>Cargá las medidas y te armamos la lista de cabios, machimbre, aislación y chapa.</span></div>
+        <a class="btn btn-principal" href="calculadora.html">Calculá tu techo</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="ventajas" aria-label="Por qué comprar en Pachalito">
+    <div class="contenedor">
+      <div class="ventaja"><div class="tilde"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D2000A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></div><div><b>Pedido por WhatsApp</b><span>Elegís, mandás el pedido y te confirmamos stock y entrega.</span></div></div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <h2>Qué vendemos</h2>
+      <div class="grilla-cat" id="grilla-cat"></div>
+      <a class="enlace" href="productos.html">Ver todos los productos</a>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor" style="display:flex;flex-direction:column;gap:12px">
+      <h2 style="margin:0">Dónde estamos</h2>
+      <div data-mapa></div>
+      <div class="dato"><span data-dato="direccion"></span></div>
+      <a class="enlace" href="contacto.html">Cómo llegar y contacto</a>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <div class="contenedor">
+    <div><b>Maderas Pachalito</b><span data-dato="direccion"></span><span class="pie-titulo">Atención al público (horario reducido)</span><span data-dato="horarios"></span><span data-si-retiro><span class="pie-titulo">Retiro de pedidos</span><span data-dato="retiro"></span></span></div>
+    <div><b>Contacto</b><a data-whatsapp href="#">WhatsApp</a><br><span data-dato="telefono"></span></div>
+    <div>
+      <nav aria-label="Pie de página"><a href="index.html">Inicio</a><a href="productos.html">Productos</a><a href="servicios.html">Servicios</a><a href="calculadora.html">Calculá tu techo</a><a href="contacto.html">Contacto</a></nav>
+      <small>© <span data-anio></span> Maderas Pachalito · <a href="admin.html" rel="nofollow" style="color:inherit">Administración</a></small>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var cats = ['Maderas','Machimbres','Molduras','Placas y tableros','Chapas y perfiles','Decks y revestimientos','Aislantes','Protectores y barnices','Clavos y fijaciones','Herrajes y soportes','Muebles'];
+  var slug = function (s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-'); };
+  document.getElementById('grilla-cat').innerHTML = cats.map(function (c) {
+    return '<a class="tarjeta-cat" href="productos.html#c=' + encodeURIComponent(c) + '">' +
+      '<div class="foto"><img src="img/cat-' + slug(c) + '.jpg" alt="" loading="lazy" data-opcional onerror="this.remove()"></div>' +
+      '<b>' + c + '</b></a>';
+  }).join('');
+})();
+</script>
+</body>
+</html>
