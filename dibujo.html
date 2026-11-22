@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dibujo de los cortes · Maderas Pachalito</title>
+<meta name="description" content="Dibujo de las piezas cortadas a medida: puntas redondeadas y bordes con el filo matado.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#D2000A">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap">
+<link rel="stylesheet" href="estilos.css?v=20261122a">
+<script src="config.js?v=20261122a"></script>
+<script src="comun.js?v=20261122a" defer></script>
+<script src="dibujo-corte.js?v=20261122a" defer></script>
+</head>
+<body>
+<header class="encabezado">
+  <div class="contenedor">
+    <a class="marca" href="index.html" aria-label="Maderas Pachalito, inicio">
+      <img src="logo.svg" alt="" width="88" height="48">
+      <span class="marca-txt">Maderas · Melaminas<br>Fenólicos · Chapas<br>Molduras</span>
+    </a>
+    <nav class="nav-pc" aria-label="Principal">
+      <a href="index.html">Inicio</a>
+      <a href="productos.html">Productos</a>
+      <a href="servicios.html">Servicios</a>
+      <a href="calculadora.html">Calculá tu techo</a>
+      <a href="contacto.html">Contacto</a>
+    </nav>
+    <div class="acciones">
+      <a class="btn-redondo rojo" data-whatsapp href="#" aria-label="Escribinos por WhatsApp">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2.1-5.4A8.4 8.4 0 1 1 21 11.5z"/></svg>
+      </a>
+      <details class="menu-movil">
+        <summary class="btn-redondo" aria-label="Abrir menú">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2A2118" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </summary>
+        <nav aria-label="Menú">
+          <a href="index.html">Inicio</a>
+          <a href="productos.html">Productos y precios</a>
+          <a href="productos.html#pedido">Mi pedido (<span data-globo>0</span>)</a>
+          <a href="servicios.html">Servicios</a>
+          <a href="calculadora.html">Calculá tu techo</a>
+          <a href="contacto.html">Contacto</a>
+        </nav>
+      </details>
+    </div>
+  </div>
+</header>
+
+<main class="pagina-dibujo">
+  <div class="contenedor">
+    <h1>Dibujo de los cortes</h1>
+    <p class="subtitulo">Cada pieza se dibuja con el lado más largo acostado. Las puntas rojas van <b>redondeadas</b> y los bordes con <span class="x">✕</span> van con el <b>filo matado</b>.</p>
+    <div id="piezas"></div>
+    <button type="button" class="btn" id="imprimir" style="margin-top:18px">Imprimir</button>
+  </div>
+</main>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var D = window.DIBUJO_CORTE, P = window.PACHALITO, esc = P.esc;
+  var q = new URLSearchParams(location.hash.slice(1)), cortes = D.decodificar(q.get('d'));
+  var h = '';
+  cortes.forEach(function (c, i) {
+    var f = c.forma;
+    h += '<section class="pieza-dibujo"><h2>' + (cortes.length > 1 ? (i + 1) + '. ' : '') + esc(c.nombre) + '</h2>' +
+      '<p class="det">' + P.numero(c.cant) + (c.cant == 1 ? ' pieza' : ' piezas') + ' de ' + P.numero(c.a) + ' x ' + P.numero(c.l) + ' cm</p>' +
+      D.svg(c.a, c.l, f, { cotas: true }) +
+      '<p class="forma-txt">' + esc(D.texto(f, c.a, c.l) || 'Puntas rectas, sin matar filo.') + '</p></section>';
+  });
+  document.getElementById('piezas').innerHTML = h || '<p class="aviso">No hay piezas para mostrar. Revisá que el link esté completo.</p>';
+  document.getElementById('imprimir').onclick = function () { window.print(); };
+});
+</script>
+
+<footer class="pie">
+  <div class="contenedor">
+    <div><b>Maderas Pachalito</b><span data-dato="direccion"></span><span class="pie-titulo">Atención al público (horario reducido)</span><span data-dato="horarios"></span><span data-si-retiro><span class="pie-titulo">Retiro de pedidos</span><span data-dato="retiro"></span></span></div>
+    <div><b>Contacto</b><a data-whatsapp href="#">WhatsApp</a><br><span data-dato="telefono"></span></div>
+    <div>
+      <nav aria-label="Pie de página"><a href="index.html">Inicio</a><a href="productos.html">Productos</a><a href="servicios.html">Servicios</a><a href="calculadora.html">Calculá tu techo</a><a href="contacto.html">Contacto</a></nav>
+      <small>© <span data-anio></span> Maderas Pachalito · <a href="admin.html" rel="nofollow" style="color:inherit">Administración</a></small>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -18,6 +18,12 @@ window.CONFIG = {
   retiro: 'Lunes a viernes de 8:00 a 11:45 hs y de 13:30 a 17:00 hs\nSábados de 8:00 a 12:30 hs\nPor la tarde, solo con el pedido realizado previamente',
   email: '',
 
+  // Cortes a medida: precio adicional POR PIEZA de cada punta redondeada y de cada borde
+  // con el filo matado. Solo números, sin puntos ni $. Ejemplo: 1500
+  // Si lo dejás en 0, al cliente le aparece "a consultar".
+  precioPunta: 0,
+  precioFilo: 0,
+
   // Conexión con Supabase (no tocar)
   supabaseUrl: 'https://qgimqttnilnqudswwhke.supabase.co',
   supabaseKey: 'sb_publishable_iW6t71iHGRDsrYZfhfrfAw_ygTzKpTb'

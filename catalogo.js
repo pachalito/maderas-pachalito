@@ -46,7 +46,7 @@
   function precioTxt(r) {
     return r.precio == null ? '<span class="consultar">Consultar precio</span>' : pesos(r.precio) + '<small>' + (esCorte(r) ? ' /m²' : sufijo(r.unidad)) + '</small>';
   }
-  function subtotal(x) { return (x.precio || 0) * x.cant * (x.m2 || 1); }
+  function subtotal(x) { return (x.precio || 0) * x.cant * (x.m2 || 1) + (x.extra || 0) * x.cant; }
   function subtotalTxt(x) { return x.precio == null ? 'A consultar' : pesos(subtotal(x)); }
   function nombreItem(x) { return x.medidas ? x.nombre + ' · corte ' + x.medidas : x.nombre; }
   function baseDe(x) { return porCodigo[x.base || x.codigo]; }
@@ -271,69 +271,18 @@
   // ---------- Dibujo del corte: puntas redondeadas y bordes con filo matado ----------
   // Puntas: 0 arriba izq, 1 arriba der, 2 abajo der, 3 abajo izq. Bordes: 0 arriba, 1 derecha, 2 abajo, 3 izquierda.
   // El lado más largo se dibuja siempre horizontal.
-  var formas = {};
-  var PUNTAS = ['arriba a la izquierda', 'arriba a la derecha', 'abajo a la derecha', 'abajo a la izquierda'];
-  var BORDES = ['arriba', 'derecha', 'abajo', 'izquierda'];
+  var D = window.DIBUJO_CORTE, formas = {};
+  var dibujoSVG = D.svg, textoForma = D.texto, formaVacia = D.vacia;
+  // Adicional por pieza de las puntas redondeadas y bordes con filo matado (precios en config.js)
+  function extraDe(f) {
+    var c = D.cuenta(f), pp = +C.precioPunta || 0, pf = +C.precioFilo || 0;
+    return { monto: c.puntas * pp + c.bordes * pf, consultar: !!((c.puntas && !pp) || (c.bordes && !pf)), hay: c.puntas + c.bordes > 0 };
+  }
+  function extraTxt(x) {
+    if (x.extraConsultar) return 'puntas y filos a consultar';
+    return x.extra ? '+ ' + pesos(x.extra) + ' puntas y filos c/u' : '';
+  }
   function formaDe(codigo) { return formas[codigo] || (formas[codigo] = { esq: [0, 0, 0, 0], bordes: [0, 0, 0, 0] }); }
-  function formaVacia(f) { return !f || (f.esq.join('') + f.bordes.join('')).indexOf('1') < 0; }
-  function ladosDe(a, l) { var hz = Math.max(a, l), vt = Math.min(a, l); return [hz, vt, hz, vt]; }
-  function textoForma(f, a, l) {
-    if (formaVacia(f)) return '';
-    var lados = ladosDe(a, l), partes = [];
-    var e = PUNTAS.filter(function (x, i) { return f.esq[i]; });
-    var b = BORDES.map(function (x, i) { return f.bordes[i] ? x + ' (' + P.numero(lados[i]) + ' cm)' : ''; }).filter(Boolean);
-    if (e.length) partes.push(e.length === 4 ? 'las 4 puntas redondeadas' : (e.length === 1 ? 'punta redondeada ' : 'puntas redondeadas ') + e.join(', '));
-    if (b.length) partes.push(b.length === 4 ? 'matar filo en los 4 bordes' : 'matar filo: ' + b.join(', '));
-    var t = partes.join('; ');
-    return t.charAt(0).toUpperCase() + t.slice(1);
-  }
-  function dibujoSVG(a, l, f, codigo) {
-    var interactivo = !!codigo, W = 320, H = interactivo ? 200 : 120, pad = interactivo ? 40 : 22;
-    var lados = ladosDe(a, l), hz = lados[0], vt = lados[1];
-    var s = Math.min((W - 2 * pad) / hz, (H - 2 * pad) / vt);
-    var w = hz * s, h = Math.max(vt * s, interactivo ? 34 : 18);
-    var x = (W - w) / 2, y = (H - h) / 2 + (interactivo ? 4 : 0);
-    var rr = Math.min(Math.min(w, h) * 0.3, 28), r = f.esq.map(function (v) { return v ? rr : 0; });
-    var n = function (v) { return Math.round(v * 10) / 10; };
-    var d = 'M' + n(x + r[0]) + ',' + n(y) + 'H' + n(x + w - r[1]) + (r[1] ? 'A' + n(r[1]) + ',' + n(r[1]) + ' 0 0 1 ' + n(x + w) + ',' + n(y + r[1]) : '') +
-      'V' + n(y + h - r[2]) + (r[2] ? 'A' + n(r[2]) + ',' + n(r[2]) + ' 0 0 1 ' + n(x + w - r[2]) + ',' + n(y + h) : '') +
-      'H' + n(x + r[3]) + (r[3] ? 'A' + n(r[3]) + ',' + n(r[3]) + ' 0 0 1 ' + n(x) + ',' + n(y + h - r[3]) : '') +
-      'V' + n(y + r[0]) + (r[0] ? 'A' + n(r[0]) + ',' + n(r[0]) + ' 0 0 1 ' + n(x + r[0]) + ',' + n(y) : '') + 'Z';
-    var esquinas = [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
-    var g = '<svg class="svg-corte" viewBox="0 0 ' + W + ' ' + H + '" ' + (interactivo ? 'role="group" aria-label="Dibujo del corte"' : 'aria-hidden="true"') + '>' +
-      '<path d="' + d + '" class="pieza"/>';
-    // Cruces en los bordes con el filo matado
-    var cruces = '';
-    for (var i = 0; i < 4; i++) {
-      if (!f.bordes[i]) continue;
-      var p0 = esquinas[i], p1 = esquinas[(i + 1) % 4];
-      var largo = Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), ini = Math.max(r[i], 6) + 4, fin = largo - Math.max(r[(i + 1) % 4], 6) - 4;
-      var paso = interactivo ? 20 : 14, k = Math.max(1, Math.floor((fin - ini) / paso)), t = interactivo ? 4.5 : 3;
-      for (var j = 0; j <= k; j++) {
-        var dd = k ? ini + (fin - ini) * j / k : (ini + fin) / 2;
-        var cx = p0[0] + (p1[0] - p0[0]) * dd / largo, cy = p0[1] + (p1[1] - p0[1]) * dd / largo;
-        cruces += 'M' + n(cx - t) + ',' + n(cy - t) + 'L' + n(cx + t) + ',' + n(cy + t) + 'M' + n(cx + t) + ',' + n(cy - t) + 'L' + n(cx - t) + ',' + n(cy + t);
-      }
-    }
-    if (cruces) g += '<path d="' + cruces + '" class="cruz"/>';
-    if (interactivo) {
-      g += '<text x="' + n(x + w / 2) + '" y="' + n(y - 12) + '" text-anchor="middle" class="cota">' + P.numero(hz) + ' cm</text>' +
-        '<text x="' + n(x - 12) + '" y="' + n(y + h / 2) + '" text-anchor="middle" class="cota" transform="rotate(-90 ' + n(x - 12) + ' ' + n(y + h / 2) + ')">' + P.numero(vt) + ' cm</text>';
-      for (var b = 0; b < 4; b++) {
-        var q0 = esquinas[b], q1 = esquinas[(b + 1) % 4], m = 16;
-        var ux = Math.sign(q1[0] - q0[0]), uy = Math.sign(q1[1] - q0[1]);
-        g += '<line x1="' + n(q0[0] + ux * m) + '" y1="' + n(q0[1] + uy * m) + '" x2="' + n(q1[0] - ux * m) + '" y2="' + n(q1[1] - uy * m) + '" class="zona zona-borde' + (f.bordes[b] ? ' activo' : '') + '"' +
-          ' data-borde="' + b + '" data-pieza="' + esc(codigo) + '" role="button" tabindex="0" aria-pressed="' + (f.bordes[b] ? 'true' : 'false') + '" aria-label="Matar filo del borde de ' + BORDES[b] + ' (' + P.numero(lados[b]) + ' cm)"/>';
-      }
-      esquinas.forEach(function (c0, i) {
-        // Si la punta está redondeada, el marcador va sobre la curva
-        var o = f.esq[i] ? rr * 0.29 : 0, c = [c0[0] + (i === 0 || i === 3 ? o : -o), c0[1] + (i < 2 ? o : -o)];
-        g += '<g class="zona zona-punta' + (f.esq[i] ? ' activo' : '') + '" data-esq="' + i + '" data-pieza="' + esc(codigo) + '" role="button" tabindex="0" aria-pressed="' + (f.esq[i] ? 'true' : 'false') + '" aria-label="Punta redondeada ' + PUNTAS[i] + '">' +
-          '<circle cx="' + n(c[0]) + '" cy="' + n(c[1]) + '" r="18" class="toque"/><circle cx="' + n(c[0]) + '" cy="' + n(c[1]) + '" r="6.5" class="marca-punta"/></g>';
-      });
-    }
-    return g + '</svg>';
-  }
   function pintarDibujo(codigo, enfocar) {
     var cont = document.querySelector('[data-dibujo="' + CSS.escape(codigo) + '"]');
     if (!cont) return;
@@ -341,7 +290,7 @@
     if (!c.ok) { cont.hidden = true; cont.innerHTML = ''; return; }
     var f = formaDe(codigo), txt = textoForma(f, c.a, c.l);
     cont.hidden = false;
-    cont.innerHTML = dibujoSVG(c.a, c.l, f, codigo) +
+    cont.innerHTML = dibujoSVG(c.a, c.l, f, { codigo: codigo }) +
       '<p class="ayuda-dibujo">Tocá una <b>punta</b> para redondearla. Tocá un <b>borde</b> para matarle el filo (se marca con <span class="x">✕</span>).</p>' +
       '<p class="forma-txt" aria-live="polite">' + (txt ? esc(txt) : 'Puntas rectas, sin matar filo.') + '</p>';
     if (enfocar) { var el = cont.querySelector(enfocar); if (el) el.focus(); }
@@ -350,7 +299,7 @@
     var codigo = el.getAttribute('data-pieza'), f = formaDe(codigo), sel;
     if (el.hasAttribute('data-esq')) { var i = +el.getAttribute('data-esq'); f.esq[i] = f.esq[i] ? 0 : 1; sel = '[data-esq="' + i + '"]'; }
     else { var b = +el.getAttribute('data-borde'); f.bordes[b] = f.bordes[b] ? 0 : 1; sel = '[data-borde="' + b + '"]'; }
-    pintarDibujo(codigo, sel);
+    actualizarCorte(codigo, sel);
   }
 
   // Medida de la placa entera del mismo material y espesor = corte máximo (en cm)
@@ -371,15 +320,17 @@
     var ok = a > 0 && l > 0 && entra;
     return { a: a, l: l, n: n, ok: ok, m2: ok ? Math.round(a * l) / 10000 : 0, max: maxTxt(placaDe(porCodigo[codigo])) };
   }
-  function actualizarCorte(codigo) {
+  function actualizarCorte(codigo, enfocar) {
     var r = porCodigo[codigo], c = leerCorte(codigo), el = document.querySelector('[data-corte-res="' + CSS.escape(codigo) + '"]');
     if (!el) return;
-    pintarDibujo(codigo);
+    pintarDibujo(codigo, enfocar);
     if (!c.a || !c.l) { el.textContent = 'Ingresá ancho y largo'; el.classList.remove('error'); return; }
     if (!c.ok) { el.textContent = 'No entra en una placa: el corte máximo es ' + c.max; el.classList.add('error'); return; }
     el.classList.remove('error');
-    var total = c.m2 * c.n;
-    el.innerHTML = '<span>' + m2Txt(total) + ' m²' + (r.precio != null ? ' · <b>' + pesos(r.precio * total) + '</b>' : ' · precio a consultar') + '</span>';
+    var total = c.m2 * c.n, ex = extraDe(formaDe(codigo));
+    var nota = !ex.hay ? '' : ex.consultar ? 'Puntas y filos: a consultar' : 'Incluye puntas y filos: ' + pesos(ex.monto * c.n);
+    el.innerHTML = '<span>' + m2Txt(total) + ' m²' + (r.precio != null ? ' · <b>' + pesos(r.precio * total + (ex.consultar ? 0 : ex.monto * c.n)) + '</b>' : ' · precio a consultar') +
+      (nota && r.precio != null ? '<small class="extra-corte">' + nota + '</small>' : '') + '</span>';
   }
   function agregarCorte(codigo) {
     var r = porCodigo[codigo], c = leerCorte(codigo);
@@ -392,7 +343,11 @@
     if (it) it.cant += c.n;
     else {
       var nuevo = { codigo: clave, base: r.codigo, nombre: r.nombre, medidas: medidas, m2: c.m2, precio: r.precio, unidad: 'm²', cant: c.n };
-      if (conForma) { nuevo.a = c.a; nuevo.l = c.l; nuevo.forma = { esq: f.esq.slice(), bordes: f.bordes.slice() }; nuevo.formaTxt = textoForma(f, c.a, c.l); }
+      if (conForma) {
+        var ex = extraDe(f);
+        nuevo.a = c.a; nuevo.l = c.l; nuevo.forma = { esq: f.esq.slice(), bordes: f.bordes.slice() }; nuevo.formaTxt = textoForma(f, c.a, c.l);
+        nuevo.extra = ex.consultar ? 0 : ex.monto; nuevo.extraConsultar = ex.consultar;
+      }
       items.push(nuevo);
     }
     P.guardarPedido(items);
@@ -425,7 +380,7 @@
     items.forEach(function (x) {
       var u = x.m2 ? 'u.' : unidadTxt(x.unidad);
       var f = baseDe(x) ? fotoUrl(baseDe(x)) : '';
-      var det = x.m2 ? m2Txt(x.m2) + ' m² c/u · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + ' /m²')
+      var det = x.m2 ? m2Txt(x.m2) + ' m² c/u · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + ' /m²') + (extraTxt(x) ? ' · ' + extraTxt(x) : '')
         : esc(x.codigo) + ' · ' + (x.precio == null ? 'precio a consultar' : pesos(x.precio) + sufijo(x.unidad));
       h += '<div class="pedido-item"><div class="arriba">' +
         (f ? '<button type="button" class="btn-foto" data-ver="' + esc(f) + '" data-titulo="' + esc(x.nombre) + '" aria-label="Ver foto grande de ' + esc(x.nombre) + '"><img class="mini-prod" src="' + esc(f) + '" alt="" loading="lazy" onerror="this.parentNode.remove()"></button>' : '') +
@@ -473,12 +428,22 @@
     items.forEach(function (x) {
       var precio = x.precio == null ? 'precio a consultar' : pesos(subtotal(x));
       if (x.m2) lineas.push('• ' + P.numero(x.cant) + (+x.cant === 1 ? ' corte' : ' cortes') + ' de ' + x.medidas + ' de ' + x.nombre + ' (' + m2Txt(x.m2 * x.cant) + ' mt2) — ' + precio);
-      if (x.m2 && x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : ''));
+      if (x.m2 && x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : '') + (extraTxt(x) ? ' — ' + extraTxt(x) : ''));
       else lineas.push('• ' + cantMensaje(x) + ' de ' + x.nombre + ' — ' + precio);
     });
+    var conDibujo = items.filter(function (x) { return x.forma && x.a && x.l; });
+    if (conDibujo.length) {
+      var url = new URL('dibujo.html#d=' + D.codificar(conDibujo), location.href).href;
+      lineas.push('', '📐 Dibujo de ' + (conDibujo.length === 1 ? 'la pieza' : 'las piezas') + ': ' + url);
+    }
     var nc = aConsultar(items);
     if (nc === items.length) lineas.push('', '¿Me pasan el precio?');
-    else lineas.push('', 'Total: ' + pesos(P.totalPedido(items)) + (nc ? ' (sin contar ' + nc + (nc === 1 ? ' producto' : ' productos') + ' a consultar)' : ''));
+    else {
+      var falta = [];
+      if (nc) falta.push(nc + (nc === 1 ? ' producto' : ' productos') + ' a consultar');
+      if (items.some(function (x) { return x.extraConsultar; })) falta.push('puntas y filos a consultar');
+      lineas.push('', 'Total: ' + pesos(P.totalPedido(items)) + (falta.length ? ' (sin contar ' + falta.join(' ni ') + ')' : ''));
+    }
     var nombre = form.querySelector('#nombre').value.trim();
     var entrega = (form.querySelector('input[name=entrega]:checked') || {}).value;
     var nota = form.querySelector('#nota').value.trim();

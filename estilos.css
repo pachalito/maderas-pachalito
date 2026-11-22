@@ -286,6 +286,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .svg-corte{display:block;width:100%;max-width:420px;height:auto;margin:0 auto;-webkit-tap-highlight-color:transparent}
 .svg-corte .pieza{fill:#E9D8BC;stroke:var(--texto);stroke-width:2;stroke-linejoin:round}
 .svg-corte .cruz{fill:none;stroke:var(--rojo);stroke-width:2.2;stroke-linecap:round;pointer-events:none}
+.svg-corte .punto-punta{fill:var(--rojo)}
 .svg-corte .cota{font-size:12px;fill:var(--suave);font-family:var(--sans)}
 .svg-corte .zona{cursor:pointer;outline:none}
 .svg-corte .zona-borde{stroke:transparent;stroke-width:24;stroke-linecap:round}
@@ -299,6 +300,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .ayuda-dibujo{margin:6px 0 0;font-size:13px;color:var(--suave);text-align:center;line-height:1.4}
 .ayuda-dibujo .x{color:var(--rojo);font-weight:700}
 .forma-txt{margin:4px 0 0;font-size:14px;font-weight:600;text-align:center;color:var(--texto)}
+.calc-corte .resultado span{display:flex;flex-direction:column}
+.extra-corte{font-size:13px;color:var(--suave);font-weight:400}
 .forma-pedido{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--suave)}
 .forma-pedido .svg-corte{width:130px;flex:0 0 130px;margin:0}
 @media (max-width:420px){.calc-corte .resultado{flex-basis:100%}.calc-corte .btn-agregar{width:100%}}
@@ -323,3 +326,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Lista de cortes (Servicios) */
 .lista-cortes{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px}
 .lista-cortes li{background:var(--arena);border:1px solid var(--linea);border-radius:999px;padding:4px 12px;font-size:15px}
+
+/* Página con el dibujo de los cortes (link del WhatsApp) */
+.pagina-dibujo{padding:20px 0 40px}
+.pagina-dibujo h1{margin:0 0 6px}
+.pagina-dibujo .x{color:var(--rojo);font-weight:700}
+.pieza-dibujo{margin-top:18px;padding:14px 16px;border:1px solid var(--linea);border-radius:14px;background:#fff;break-inside:avoid}
+.pieza-dibujo h2{margin:0;font-size:18px}
+.pieza-dibujo .det{margin:2px 0 6px;color:var(--suave);font-size:15px}
+.pieza-dibujo .svg-corte{max-width:560px}
+@media print{.encabezado,.pie,#imprimir,.barra-pedido{display:none!important}.pieza-dibujo{border-color:#999}}
