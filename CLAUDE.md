@@ -22,6 +22,7 @@ español rioplatense (vos), simple y sin términos técnicos.
 - Adicional por pieza: precio de cada punta y cada borde. Se toma de los artículos con código
   `ADIC-PUNTA` y `ADIC-FILO` (se cargan en Administración y no se muestran en el catálogo).
   Si no existen, se usan `precioPunta` / `precioFilo` de `config.js`; en 0 = "a consultar".
+  El dueño ya los creó con precio (falta verlo funcionando en el sitio publicado).
 - Piezas chicas: si una pieza tiene menos de `piezaChicaM2` (0,25 m²), el m² lleva
   `recargoPiezaChica` (50%). Se mira cada pieza por separado. Configurado en `config.js`.
 - El mensaje de WhatsApp incluye un link a `dibujo.html#d=...` con todos los cortes
@@ -37,7 +38,6 @@ español rioplatense (vos), simple y sin términos técnicos.
 - Si cambia la dirección del sitio, los links de dibujos ya enviados por WhatsApp dejan de abrir.
 
 ## Pendientes (actualizar cuando se resuelvan)
-- Crear en Administración los artículos `ADIC-PUNTA` y `ADIC-FILO` con sus precios.
 - Confirmar el límite de pieza chica (hoy 0,25 m²).
 - Publicar en Netlify la versión con todos los cambios.
 - Faltan las fotos del sitio (`img/`, ver `img/LEEME.txt`).
