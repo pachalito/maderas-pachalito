@@ -420,6 +420,7 @@
       '<p class="nota-precios">Te confirmamos stock y entrega por WhatsApp.</p>' +
       '<form id="form-pedido">' +
       '<div class="campo"><label for="nombre">Tu nombre</label><input id="nombre" autocomplete="name" placeholder="Ej: Juan"></div>' +
+      '<div class="campo"><label for="celular">Tu celular' + (items.some(function (x) { return x.m2; }) ? '' : ' (opcional)') + '</label><input id="celular" type="tel" inputmode="tel" autocomplete="tel" placeholder="Ej: 11 2345-6789"></div>' +
       '<fieldset class="campo" style="border:0;padding:0;margin-top:14px"><legend style="font-size:14px;padding:0 0 6px">Entrega</legend><div class="opciones">' +
       '<label class="opcion"><input type="radio" name="entrega" value="Retiro en el local" checked> Retiro en el local</label>' +
       '<label class="opcion"><input type="radio" name="entrega" value="Envío a domicilio"> Envío a domicilio</label></div></fieldset>' +
@@ -459,7 +460,10 @@
       return { nombre: x.nombre, a: x.a || (m ? num(m[1]) : 0), l: x.l || (m ? num(m[2]) : 0), cant: x.cant, forma: x.forma || { esq: [0, 0, 0, 0], bordes: [0, 0, 0, 0] } };
     }).filter(function (c) { return c.a && c.l; });
     if (cortes.length) {
-      var url = new URL('dibujo.html#d=' + D.codificar(cortes), location.href).href;
+      var cli = form.querySelector('#nombre').value.trim(), cel = form.querySelector('#celular').value.trim(), hoy = new Date();
+      var extra = (cli ? '&n=' + encodeURIComponent(cli) : '') + (cel ? '&t=' + encodeURIComponent(cel) : '') +
+        '&f=' + hoy.getFullYear() + '-' + String(hoy.getMonth() + 1).padStart(2, '0') + '-' + String(hoy.getDate()).padStart(2, '0');
+      var url = new URL('dibujo.html#d=' + D.codificar(cortes) + extra, location.href).href;
       lineas.push('', '📐 Dibujo y lista de cortes: ' + url);
     }
     var nc = aConsultar(items);
@@ -474,6 +478,8 @@
     var entrega = (form.querySelector('input[name=entrega]:checked') || {}).value;
     var nota = form.querySelector('#nota').value.trim();
     if (nombre) lineas.push('Nombre: ' + nombre);
+    var celular = form.querySelector('#celular').value.trim();
+    if (celular) lineas.push('Celular: ' + celular);
     if (entrega) lineas.push('Entrega: ' + entrega);
     if (entrega === 'Envío a domicilio') {
       var dir = form.querySelector('#dir-envio').value.trim();
@@ -587,6 +593,14 @@
         return;
       }
       if ($('err-dir')) { $('err-dir').remove(); dirEl.removeAttribute('aria-invalid'); }
+      // Con cortes a medida pedimos el celular: va en la lista de cortes y en el Excel
+      var celEl = $('celular'), hayCortes = P.leerPedido().some(function (x) { return x.m2; });
+      if (hayCortes && celEl.value.replace(/\D/g, '').length < 8) {
+        celEl.setAttribute('aria-invalid', 'true'); celEl.focus();
+        if (!$('err-cel')) celEl.insertAdjacentHTML('afterend', '<span id="err-cel" style="color:var(--rojo-osc);font-size:14px">Escribí tu celular con código de área (ej: 11 2345-6789).</span>');
+        return;
+      }
+      if ($('err-cel')) { $('err-cel').remove(); celEl.removeAttribute('aria-invalid'); }
       window.open(P.linkWhatsApp(mensajePedido(e.target)), '_blank', 'noopener');
     });
 

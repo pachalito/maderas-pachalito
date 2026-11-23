@@ -331,6 +331,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 /* Página con el dibujo de los cortes (link del WhatsApp) */
 .pagina-dibujo{padding:20px 0 40px}
 .pagina-dibujo h1{margin:0 0 6px}
+.datos-cliente{margin:0 0 8px;padding:10px 14px;border-radius:12px;background:var(--arena);font-size:16px}
 .pagina-dibujo .x{color:var(--rojo);font-weight:700}
 .pieza-dibujo{margin-top:18px;padding:14px 16px;border:1px solid var(--linea);border-radius:14px;background:#fff;break-inside:avoid}
 .pieza-dibujo h2{margin:0;font-size:18px}

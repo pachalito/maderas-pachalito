@@ -29,6 +29,8 @@ español rioplatense (vos), simple y sin términos técnicos.
   codificados en el link (no se guardan en ninguna base). Esa página muestra la lista
   de cortes con dibujo y deja descargar Excel (.xlsx con dibujo en caracteres, usa
   `lib/xlsx-js-style.min.js`), CSV o imprimir / guardar PDF.
+- En el pedido se pide el celular (obligatorio si hay cortes). Nombre, celular y fecha van en el
+  link (`&n=`, `&t=`, `&f=`) y aparecen arriba en la lista de cortes, el Excel y el CSV.
 
 ## Publicación
 - Repositorio: GitHub `pachalito/maderas-pachalito`, rama `main`.
