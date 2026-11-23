@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600&display=swap">
-<link rel="stylesheet" href="estilos.css?v=20261122a">
-<script src="config.js?v=20261122a"></script>
-<script src="comun.js?v=20261122a" defer></script>
-<script src="dibujo-corte.js?v=20261122a" defer></script>
+<link rel="stylesheet" href="estilos.css?v=20261123a">
+<script src="config.js?v=20261123a"></script>
+<script src="comun.js?v=20261123a" defer></script>
+<script src="dibujo-corte.js?v=20261123a" defer></script>
 </head>
 <body>
 <header class="encabezado">
@@ -54,7 +54,7 @@
 <main class="pagina-dibujo">
   <div class="contenedor">
     <h1>Lista de cortes</h1>
-    <p class="subtitulo">Cada pieza se dibuja con el lado más largo acostado. Las puntas rojas van <b>redondeadas</b> y los bordes con <span class="x">✕</span> van con el <b>filo matado</b>.</p>
+    <p class="subtitulo">Cada pieza se dibuja con el largo horizontal, a favor de la veta. Las puntas rojas van <b>redondeadas</b> y los bordes con <span class="x">✕</span> van con el <b>filo matado</b>.</p>
     <div id="piezas"></div>
     <div class="botones-dibujo">
       <button type="button" class="btn btn-principal" id="excel">Descargar Excel</button>
@@ -83,15 +83,15 @@ document.addEventListener('DOMContentLoaded', function () {
   function num(v) { return String(+(+v).toFixed(2)).replace('.', ','); }
   function hoyTxt() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   function datosPieza(c) {
-    var hz = Math.max(c.a, c.l), vt = Math.min(c.a, c.l), lados = [hz, vt, hz, vt];
+    var hz = c.l, vt = c.a, lados = [hz, vt, hz, vt];
     var puntas = PUNTA_COD.filter(function (x, i) { return c.forma.esq[i]; });
     var bordes = BORDE_COD.map(function (x, i) { return c.forma.bordes[i] ? x + ' ' + num(lados[i]) : ''; }).filter(Boolean);
     return { puntas: puntas.join(' / ') || '-', bordes: bordes.join(' / ') || '-' };
   }
-  // Dibujo con caracteres (lado más largo horizontal):  / \ = punta redondeada,  × = filo matado
+  // Dibujo con caracteres (largo horizontal, a favor de la veta):  / \ = punta redondeada,  × = filo matado
   function dibujoTexto(c) {
-    var f = c.forma, hz = Math.max(c.a, c.l), vt = Math.min(c.a, c.l);
-    var W = 16, H = Math.max(1, Math.min(7, Math.round(W * vt / hz / 2)));
+    var f = c.forma, hz = c.l, vt = c.a;
+    var W = Math.max(4, Math.min(16, Math.round(16 * hz / Math.max(hz, vt)))), H = Math.max(1, Math.min(7, Math.round(16 * vt / Math.max(hz, vt) / 2)));
     var esq = [f.esq[0] ? '/' : '┌', f.esq[1] ? '\\' : '┐', f.esq[2] ? '/' : '┘', f.esq[3] ? '\\' : '└'];
     var hor = function (i) { return new Array(W + 1).join(f.bordes[i] ? '×' : '─'); };
     var lin = [esq[0] + hor(0) + esq[1]];
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
     lin.push(esq[3] + hor(2) + esq[2]);
     return lin.join('\n');
   }
-  var REFS = ['Referencias: la pieza se mira con el lado más largo arriba (como en el dibujo).',
+  var REFS = ['Referencias: la pieza se mira con el largo horizontal, a favor de la veta (como en el dibujo).',
     'ARR = arriba · ABA = abajo · IZQ = izquierda · DER = derecha. Ej: ARR-IZQ = punta de arriba a la izquierda; ABA 120 = borde de abajo (lado de 120 cm).',
     'En el dibujo: / o \\ en una esquina = punta redondeada · × en un borde = filo matado.'];
   function bajar(blob, nombre) {

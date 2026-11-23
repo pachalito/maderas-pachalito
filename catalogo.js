@@ -269,7 +269,7 @@
       '<div class="calc-corte" data-calc="' + esc(r.codigo) + '">' +
       '<div class="medida"><label for="ca-' + id + '">Ancho</label><span><input id="ca-' + id + '" inputmode="decimal" autocomplete="off" placeholder="0" data-corte-a="' + esc(r.codigo) + '"> cm</span></div>' +
       '<span class="por" aria-hidden="true">×</span>' +
-      '<div class="medida"><label for="cl-' + id + '">Largo</label><span><input id="cl-' + id + '" inputmode="decimal" autocomplete="off" placeholder="0" data-corte-l="' + esc(r.codigo) + '"> cm</span></div>' +
+      '<div class="medida"><label for="cl-' + id + '">Largo · veta</label><span><input id="cl-' + id + '" inputmode="decimal" autocomplete="off" placeholder="0" data-corte-l="' + esc(r.codigo) + '"> cm</span></div>' +
       '<div class="medida"><label for="cn-' + id + '">Piezas</label><span><input id="cn-' + id + '" inputmode="numeric" autocomplete="off" value="1" data-corte-n="' + esc(r.codigo) + '"></span></div>' +
       '<div class="dibujo-corte" data-dibujo="' + esc(r.codigo) + '" hidden></div>' +
       '<div class="resultado" data-corte-res="' + esc(r.codigo) + '" aria-live="polite">Ingresá ancho y largo</div>' +
@@ -278,8 +278,8 @@
   }
   // ---------- Dibujo del corte: puntas redondeadas y bordes con filo matado ----------
   // Puntas: 0 arriba izq, 1 arriba der, 2 abajo der, 3 abajo izq. Bordes: 0 arriba, 1 derecha, 2 abajo, 3 izquierda.
-  // El lado más largo se dibuja siempre horizontal.
-  var D = window.DIBUJO_CORTE, formas = {};
+  // El largo se dibuja siempre horizontal (a favor de la veta).
+  var D = window.DIBUJO_CORTE, formas = {}, avisos = {};
   var dibujoSVG = D.svg, textoForma = D.texto, formaVacia = D.vacia;
   // Adicional por pieza de las puntas redondeadas y bordes con filo matado (precios en config.js)
   // Los precios salen de los artículos ADIC-PUNTA y ADIC-FILO (se cargan desde Administración).
@@ -304,14 +304,19 @@
     var f = formaDe(codigo), txt = textoForma(f, c.a, c.l);
     cont.hidden = false;
     cont.innerHTML = dibujoSVG(c.a, c.l, f, { codigo: codigo }) +
-      '<p class="ayuda-dibujo">Tocá una <b>punta</b> para redondearla. Tocá un <b>borde</b> para matarle el filo (se marca con <span class="x">✕</span>).</p>' +
-      '<p class="forma-txt" aria-live="polite">' + (txt ? esc(txt) : 'Puntas rectas, sin matar filo.') + '</p>';
+      '<p class="ayuda-dibujo">El largo va horizontal, a favor de la veta. Tocá una <b>punta</b> para redondearla. Tocá un <b>borde</b> para matarle el filo (se marca con <span class="x">✕</span>).</p>' +
+      '<p class="forma-txt" aria-live="polite">' + (txt ? esc(txt) : 'Puntas rectas, sin matar filo.') + '</p>' +
+      (avisos[codigo] ? '<p class="aviso-forma">' + esc(avisos[codigo]) + '</p>' : '');
     if (enfocar) { var el = cont.querySelector(enfocar); if (el) el.focus(); }
   }
   function tocarForma(el) {
     var codigo = el.getAttribute('data-pieza'), f = formaDe(codigo), sel;
-    if (el.hasAttribute('data-esq')) { var i = +el.getAttribute('data-esq'); f.esq[i] = f.esq[i] ? 0 : 1; sel = '[data-esq="' + i + '"]'; }
-    else { var b = +el.getAttribute('data-borde'); f.bordes[b] = f.bordes[b] ? 0 : 1; sel = '[data-borde="' + b + '"]'; }
+    var encender;
+    if (el.hasAttribute('data-esq')) { var i = +el.getAttribute('data-esq'); f.esq[i] = f.esq[i] ? 0 : 1; encender = true; sel = '[data-esq="' + i + '"]'; }
+    else { var b = +el.getAttribute('data-borde'); f.bordes[b] = f.bordes[b] ? 0 : 1; encender = !!f.bordes[b]; sel = '[data-borde="' + b + '"]'; }
+    var tocadas = D.ajustar(f, encender);
+    avisos[codigo] = tocadas.length ? (tocadas.length === 1 ? 'Como la punta ' + D.PUNTAS[tocadas[0]] + ' va redondeada, ' : 'Como esas puntas van redondeadas, ') +
+      (encender ? 'el filo se mata en los dos bordes que la tocan.' : 'se sacó el filo matado de los dos bordes que la tocan.').replace('la tocan', tocadas.length === 1 ? 'la tocan' : 'las tocan') : '';
     actualizarCorte(codigo, sel);
   }
 
@@ -367,7 +372,7 @@
       items.push(nuevo);
     }
     P.guardarPedido(items);
-    delete formas[codigo];
+    delete formas[codigo]; delete avisos[codigo];
     return true;
   }
 
@@ -445,7 +450,7 @@
       var precio = x.precio == null ? 'precio a consultar' : pesos(subtotal(x));
       if (x.m2) {
         lineas.push('• ' + P.numero(x.cant) + (+x.cant === 1 ? ' corte' : ' cortes') + ' de ' + x.medidas + ' de ' + x.nombre + ' (' + m2Txt(x.m2 * x.cant) + ' mt2' + (x.recargo ? ', pieza chica +' + P.numero(x.recargo) + '%' : '') + ') — ' + precio);
-        if (x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (mirando la pieza con el lado de ' + P.numero(Math.max(x.a, x.l)) + ' cm arriba)' : '') + (extraTxt(x) ? ' — ' + extraTxt(x) : ''));
+        if (x.formaTxt) lineas.push('   ↳ ' + x.formaTxt + (x.a !== x.l ? ' (con el largo de ' + P.numero(x.l) + ' cm horizontal, a favor de la veta)' : '') + (extraTxt(x) ? ' — ' + extraTxt(x) : ''));
       } else lineas.push('• ' + cantMensaje(x) + ' de ' + x.nombre + ' — ' + precio);
     });
     // Link con el dibujo y la lista de todos los cortes (para ver, imprimir o bajar a Excel)

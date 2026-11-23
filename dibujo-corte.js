@@ -10,7 +10,28 @@
   var PUNTAS = ['arriba a la izquierda', 'arriba a la derecha', 'abajo a la derecha', 'abajo a la izquierda'];
   var BORDES = ['arriba', 'derecha', 'abajo', 'izquierda'];
   function formaVacia(f) { return !f || (f.esq.join('') + f.bordes.join('')).indexOf('1') < 0; }
-  function ladosDe(a, l) { var hz = Math.max(a, l), vt = Math.min(a, l); return [hz, vt, hz, vt]; }
+  // El largo va siempre horizontal (a favor de la veta): arriba y abajo miden el largo, los costados el ancho
+  function ladosDe(a, l) { return [l, a, l, a]; }
+  // Bordes que toca cada punta: la punta i toca el borde i y el borde (i + 3) % 4
+  function bordesDePunta(i) { return [i, (i + 3) % 4]; }
+  // Regla del taller: si una punta va redondeada y se mata el filo de uno de sus bordes,
+  // hay que matarlo en los dos. encender = true cuando se acaba de marcar algo, false cuando se desmarcó un borde.
+  // Devuelve las puntas que obligaron a cambiar algo.
+  function ajustar(f, encender) {
+    var tocadas = [], cambio = true;
+    while (cambio) {
+      cambio = false;
+      for (var i = 0; i < 4; i++) {
+        if (!f.esq[i]) continue;
+        var b = bordesDePunta(i), x = f.bordes[b[0]], y = f.bordes[b[1]];
+        if (x === y) continue;
+        var v = encender ? 1 : 0;
+        f.bordes[b[0]] = v; f.bordes[b[1]] = v; cambio = true;
+        if (tocadas.indexOf(i) < 0) tocadas.push(i);
+      }
+    }
+    return tocadas;
+  }
   function textoForma(f, a, l) {
     if (formaVacia(f)) return '';
     var lados = ladosDe(a, l), partes = [];
@@ -28,7 +49,7 @@
     var W = 320, H = grande ? 200 : 120, pad = grande ? 40 : 22;
     var lados = ladosDe(a, l), hz = lados[0], vt = lados[1];
     var s = Math.min((W - 2 * pad) / hz, (H - 2 * pad) / vt);
-    var w = hz * s, h = Math.max(vt * s, grande ? 34 : 18);
+    var w = Math.max(hz * s, grande ? 34 : 18), h = Math.max(vt * s, grande ? 34 : 18);
     var x = (W - w) / 2, y = (H - h) / 2 + (grande ? 4 : 0);
     var rr = Math.min(Math.min(w, h) * 0.3, 28), r = f.esq.map(function (v) { return v ? rr : 0; });
     var n = function (v) { return Math.round(v * 10) / 10; };
@@ -99,5 +120,5 @@
       return c.a > 0 && c.l > 0 ? c : null;
     }).filter(Boolean);
   }
-  window.DIBUJO_CORTE = { svg: dibujoSVG, texto: textoForma, vacia: formaVacia, cuenta: cuenta, codificar: codificar, decodificar: decodificar, PUNTAS: PUNTAS, BORDES: BORDES };
+  window.DIBUJO_CORTE = { ajustar: ajustar, svg: dibujoSVG, texto: textoForma, vacia: formaVacia, cuenta: cuenta, codificar: codificar, decodificar: decodificar, PUNTAS: PUNTAS, BORDES: BORDES };
 })();

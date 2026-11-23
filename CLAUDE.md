@@ -16,6 +16,9 @@ español rioplatense (vos), simple y sin términos técnicos.
 - `catalogo.js`: calculadora de cortes. Al poner ancho y largo se dibuja la pieza
   (`dibujo-corte.js`). El cliente toca puntas para redondearlas y bordes para "matar el filo"
   (se marcan con cruces).
+- El LARGO se dibuja siempre horizontal porque va a favor de la veta (aunque sea más corto que el ancho).
+- Regla del taller: si una punta va redondeada y se mata el filo de un borde que la toca, se mata
+  en los dos bordes de esa punta (`ajustar` en `dibujo-corte.js` lo hace solo y muestra un aviso).
 - Adicional por pieza: precio de cada punta y cada borde. Se toma de los artículos con código
   `ADIC-PUNTA` y `ADIC-FILO` (se cargan en Administración y no se muestran en el catálogo).
   Si no existen, se usan `precioPunta` / `precioFilo` de `config.js`; en 0 = "a consultar".
